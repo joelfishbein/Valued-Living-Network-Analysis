@@ -1,0 +1,67 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+# Information about this script
+
+**Purpose**: XX
+
+**Input**: XX
+
+**Summary of code**
+
+XX
+
+**Output**
+
+XX
+
+```{r, include=FALSE}
+library(tidyverse)
+library(here)
+
+raw_self_report_data <- read_csv('~/Research - Lives on HD/Valued Living Study/Valued Living Study raw data/Current/data from Qualtrics/RCT_Qualtrics_Unabridged_10.12.20.csv', na = ("#NULL!"))
+
+
+```
+
+# Create Datasets
+
+## Variables to analyze at Pre
+
+```{r}
+
+vars_at_pre <- raw_self_report_data %>%
+  select(ID,
+         Condition_Dummy = Condition, 
+         HADS.A_T1 = HAD_A_T1,
+         IESR.Total_T1 = Trauma_Mean_T1,
+         FCR_T1  = Mean_fearofrec_T1,
+         SCS_T1 = SelfComp_Mean_T1,
+         EAC.Total_T1 = EAC_Tot_T1,
+         AAQc_T1,
+         CESD_T1) %>%
+  mutate(Condition = factor(Condition_Dummy, 
+                               levels = c(-1,1), 
+                               labels = c("MEUC", "ACT")))
+
+vars_at_pre.presence <- vars_at_pre %>%
+  mutate(across(everything(), 
+                ~1 * (. != 0)))
+
+
+vars_at_pre.presence
+```
+
+## Save datasets
+
+```{r}
+
+write_rds(x = vars_at_pre,
+          file = here('4 Generated Datasets','Vars_At_Pre_Data.rds'))
+
+write_rds(x = vars_at_pre.presence,
+          file = here('4 Generated Datasets','Vars_At_Pre_Presence.rds'))
+
+```
