@@ -1,11 +1,10 @@
 ---
-title: "R Notebook"
+title: "Network of variables at Pre"
 output: html_notebook
 ---
-
 Per Jonas's suggestion I will attempt to model no more than 8 variables simultaneously.
 
-The eight variables Joanna and I chose in descending order of importance to keep in the model are:
+The seven variables Joanna and I chose in descending order of importance to keep in the model are:
 
 HADS-A (drop first among anx measures?)
 IES-R
@@ -17,15 +16,50 @@ CESD
 
 # Read in the data and libraries
 
+```{r}
+library(tidyverse)
+library(bootnet)
+library(psych)
+library(skimr)  
+library(corrr)
 
+``` 
 
 ```{r}
-plot(cars)
+data <- read_rds(file = here('4 Generated Datasets','Vars_At_Pre_Data.rds'))
+presence <- read_rds(file = here('4 Generated Datasets','Vars_At_Pre_Presence.rds'))
+
 ```
 
-Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Cmd+Option+I*.
+# Examine univariates
 
-When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Cmd+Shift+K* to preview the HTML file). 
+Distributions look ok.
 
-The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
+```{r}
+data %>%  
+  select(-ID, -Condition_Dummy, -Condition) %>%
+  psych::describe()
+  
+
+```
+
+# Examine bivariates
+
+No correlations looking too high here which is good...
+
+corrr package used for easy computation and display of the correlation matrix
+
+```{r}
+
+data %>%
+  select(-ID, -Condition_Dummy, -Condition) %>%
+  corrr::correlate() %>%
+  corrr::rearrange() %>%
+  corrr::shave() %>%
+  corrr::fashion()
+  
+```
+
+# Estimate network model
+
 
