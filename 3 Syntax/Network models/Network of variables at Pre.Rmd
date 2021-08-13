@@ -18,7 +18,8 @@ CESD
 
 ```{r}
 library(tidyverse)
-library(bootnet)
+library(mgm)
+library(qgraph)
 library(psych)
 library(skimr)  
 library(corrr)
@@ -41,7 +42,7 @@ data %>%
   psych::describe()
   
 
-```
+``
 
 # Examine bivariates
 
@@ -62,4 +63,55 @@ data %>%
 
 # Estimate network model
 
+## Setup data object
 
+Data must not contain any missing values (i.e. NAs)
+
+
+```{r}
+
+responses <- data %>% select(-ID, -Condition_Dummy, -Condition) %>%
+  drop_na()
+
+responses %>%
+  psych::describe()
+
+colnames(responses)
+
+```
+
+### Estimate model
+
+
+```{r}
+
+set.seed(08132021)
+fit_mgm <- mgm::mgm(data = responses, 
+         
+         # tells model that all variables are continuous
+         level = c(1,1,1,1,1,1,1), 
+         
+         # tells model that all variables have assumed Gaussian normal distribution
+         type = c("g","g","g","g","g","g","g"), 
+         
+         k =2,
+         
+         # per Jonas set this way
+         ruleReg = "OR")
+         
+
+```
+
+## Plot model estimates
+```{r}
+
+width <- 9
+pdf(here('5 Tables and Figures', 'Pre Network.pdf'), width = width, height = width*.6)
+
+qgraph(fit_mgm$pairwise$wadj, 
+       layout = 'spring', repulsion = 1.3,
+       edge.color = fit_mgm$pairwise$edgecolor_cb, 
+        legend.cex=.4, 
+       vsize = 3.5, esize = 15, labels = c('HADS','IESR','FCR','SCS','EAC','AAQc','CESD'))
+
+```
