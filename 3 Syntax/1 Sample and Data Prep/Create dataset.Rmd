@@ -28,7 +28,9 @@ raw_self_report_data <- read_csv('~/Research - Lives on HD/Valued Living Study/V
 
 # Create Datasets
 
-## Variables to analyze at Pre
+## Pre
+
+### Variables to analyze at Pre
 
 ```{r}
 
@@ -54,7 +56,7 @@ vars_at_pre.presence <- vars_at_pre %>%
 vars_at_pre.presence
 ```
 
-## Save datasets
+### Save datasets
 
 ```{r}
 
@@ -63,5 +65,51 @@ write_rds(x = vars_at_pre,
 
 write_rds(x = vars_at_pre.presence,
           file = here('4 Generated Datasets','Vars_At_Pre_Presence.rds'))
+
+```
+
+
+
+## All data
+
+### Variables to analyze at Pre
+
+```{r}
+
+data_to_export <- raw_self_report_data %>%
+  select(ID,
+         Condition_Dummy = Condition,
+         starts_with("HAD_A"),
+         starts_with("Trauma_Mean"),
+         starts_with("Mean_fearofrec"),
+         starts_with("SelfComp_Mean_T"),
+         starts_with("EAC_Tot"),
+         starts_with("AAQc_T"),
+         starts_with("CESD_T")) %>%
+
+  # fix naming
+  rename_with(.fn = ~str_replace(.x, "HAD_A", "HADS.A")) %>%
+  rename_with(.fn = ~str_replace(.x, "Trauma_Mean", "IESR.Total")) %>%
+  rename_with(.fn = ~str_replace(.x, "Mean_fearofrec", "FCR")) %>%
+  rename_with(.fn = ~str_replace(.x, "SelfComp_Mean", "SCS")) %>%
+  rename_with(.fn = ~str_replace(.x, "EAC_Tot", "EAC.Total")) %>%
+  
+  # pivot to tidy
+  pivot_longer(cols = HADS.A_T1:CESD_T5, names_to = c("instrument","timepoint"),names_sep = "_T") %>%
+  
+  # pivot to long by timepoint, wide by instrument
+  pivot_wider(names_from = instrument)
+
+data_to_export
+```
+
+
+### Save datasets
+
+```{r}
+
+write_rds(x = data_to_export,
+          file = here('4 Generated Datasets','Vars_At_All_Timepoints.rds'))
+
 
 ```
