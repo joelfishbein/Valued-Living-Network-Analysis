@@ -40,6 +40,5 @@ vignettes/*.pdf
 
 
 # other stuff
-.html
 .DS_Store
 *.html
