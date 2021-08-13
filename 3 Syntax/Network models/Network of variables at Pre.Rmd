@@ -1,5 +1,5 @@
 ---
-title: "Network of variables at Pre"
+title: "Estimate and plot networks"
 output: html_notebook
 ---
 Per Jonas's suggestion I will attempt to model no more than 8 variables simultaneously.
@@ -30,6 +30,8 @@ library(corrr)
 data <- read_rds(file = here('4 Generated Datasets','Vars_At_Pre_Data.rds'))
 presence <- read_rds(file = here('4 Generated Datasets','Vars_At_Pre_Presence.rds'))
 
+
+data_all_timepoints <- read_rds(file = here('4 Generated Datasets','Vars_At_All_Timepoints.rds'))
 ```
 
 # Examine univariates
@@ -42,26 +44,34 @@ data %>%
   psych::describe()
   
 
-``
+```
 
 # Examine bivariates
-
-No correlations looking too high here which is good...
 
 corrr package used for easy computation and display of the correlation matrix
 
 ```{r}
 
-data %>%
-  select(-ID, -Condition_Dummy, -Condition) %>%
+get_correlations <- function(my_data){
+  my_data %>%
   corrr::correlate() %>%
   corrr::rearrange() %>%
   corrr::shave() %>%
   corrr::fashion()
+}
+
+```
+
+No correlations looking too high here which is good...
+```{r}
+
+get_correlations(data)
   
 ```
 
-# Estimate network model
+# Estimate network model for Pre, excluding condition
+
+Exclude condition because no treatment has taken place...so any treatment effects would be spurious
 
 ## Setup data object
 
@@ -80,7 +90,7 @@ colnames(responses)
 
 ```
 
-### Estimate model
+### Estimate Pre model
 
 
 ```{r}
@@ -102,7 +112,7 @@ fit_mgm <- mgm::mgm(data = responses,
 
 ```
 
-## Plot model estimates
+## Plot Pre model estimates
 ```{r}
 
 width <- 9
@@ -114,4 +124,115 @@ qgraph(fit_mgm$pairwise$wadj,
         legend.cex=.4, 
        vsize = 3.5, esize = 15, labels = c('HADS','IESR','FCR','SCS','EAC','AAQc','CESD'))
 
+```
+
+# Generic functions for Mid, Post, 3mFU, 6mFU
+```{r}
+
+fit_my_mgm <- function(my_data){
+  
+  set.seed(08132021)
+  fit_mgm <- mgm::mgm(data = my_data, 
+                      
+                      # first variable (condition) has 2 conditions, all others are continuous
+                      level = c(2,1,1,1,1,1,1,1), 
+                      
+                      # first variable (condition) is categorical, all others 
+                      # have assumed Gaussian normal ('g') distributions
+                      type = c("c","g","g","g","g","g","g","g"), 
+                      
+                      k =2,
+                      
+                      # per Jonas set this way
+                      ruleReg = "OR")
+  
+  return(fit_mgm)
+  
+}
+
+```
+
+```{r}
+
+plot_my_mgm <- function(my_mgm_fit){
+  
+  my_edgeweights <- my_mgm_fit$pairwise$wadj
+  
+  my_colorblind_edge_colors <- my_mgm_fit$pairwise$edgecolor_cb
+  
+  qgraph(my_edgeweights, 
+         layout = 'spring', repulsion = 1.3,
+         edge.color = my_colorblind_edge_colors, 
+         legend.cex=.4, 
+         vsize = 3.5, esize = 15, labels = c('ACT or MEUC','HADS','IESR','FCR','SCS','EAC','AAQc','CESD'))
+}
+  
+
+
+```
+
+# Mid model
+
+```{r}
+
+data.mid <- data_all_timepoints %>% filter(timepoint == 2) %>%
+  select(-timepoint, -ID) %>%
+  drop_na()
+
+```
+
+## Descriptives
+
+### Univariates
+
+```{r}
+psych::describe(data.mid)
+
+```
+
+### Bivariates
+
+```{r}
+get_correlations(data.mid)
+
+```
+
+
+```{r}
+mid.fit <- fit_my_mgm(data.mid)
+
+plot_my_mgm(mid.fit)
+```
+
+# Post model
+
+```{r}
+
+data.post <- data_all_timepoints %>% filter(timepoint == 3) %>%
+  select(-timepoint, -ID) %>%
+  drop_na()
+
+```
+
+## Descriptives
+
+### Univariates
+
+```{r}
+psych::describe(data.post)
+
+```
+
+### Bivariates
+
+```{r}
+get_correlations(data.post)
+
+```
+
+
+```{r}
+post.fit <- fit_my_mgm(data.post)
+
+plot_my_mgm(post.fit)
 ```
