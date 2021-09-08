@@ -14,6 +14,11 @@ EAC
 AAQc
 CESD
 
+Open questions:
+- play with lambda levels?
+- estimate moderated models?
+- 
+
 # Read in the data and libraries
 
 ```{r}
@@ -32,64 +37,6 @@ data <- read_rds(file = here('4 Generated Datasets','Vars_At_Pre_Data.rds'))
 
 data_all_timepoints <- read_rds(file = here('4 Generated Datasets','Vars_At_All_Timepoints.rds'))
 ```
-
-# Examine univariates
-
-Distributions look ok.
-
-```{r}
-data %>%  
-  select(-ID, -Condition_Dummy, -Condition) %>%
-  psych::describe()
-  
-
-```
-
-# Examine bivariates
-
-corrr package used for easy computation and display of the correlation matrix
-
-```{r}
-
-get_correlations <- function(my_data){
-  my_data %>%
-  corrr::correlate() %>%
-  corrr::rearrange() %>%
-  corrr::shave() %>%
-  corrr::fashion()
-}
-
-```
-
-No correlations looking too high here which is good...
-```{r}
-data %>%
-  select(-ID, -Condition_Dummy, -Condition) %>%
-  get_correlations()
-```
-
-# Estimate network model for Pre, excluding condition
-
-Exclude condition because no treatment has taken place...so any treatment effects would be spurious
-
-## Setup data object
-
-Data must not contain any missing values (i.e. NAs)
-
-
-```{r}
-
-responses <- data %>% select(-ID, -Condition_Dummy, -Condition) %>%
-  drop_na()
-
-responses %>%
-  psych::describe()
-
-colnames(responses)
-
-```
-
-
 
 # Generic functions
 
@@ -170,8 +117,6 @@ plot_my_mgm <- function(my_mgm_fit){
          vsize = 3.5, esize = 15, labels = c('ACT or MEUC','HADS','IESR','FCR','SCS','EAC','AAQc','CESD'))
 }
   
-
-
 ```
 
 ## Wrapper to call everything
@@ -190,15 +135,12 @@ runNetworkForOneTimepoint <- function(data_all_timepoints, timepoint){
   
   plot_my_mgm(network.fit)
 
-
 }
-
-
 ```
 
 ## Estimate Pre model
 
-This model has to be specified differently than the rest because we don't want the condition modeled
+This model has to be specified differently than the rest because we don't want condition modeled
 
 ```{r}
 
