@@ -6,7 +6,7 @@ Per Jonas's suggestion I will attempt to model no more than 8 variables simultan
 
 The seven variables Joanna and I chose in descending order of importance to keep in the model are:
 
-HADS-A (drop first among anx measures?)
+HADS-A
 IES-R
 FCR
 Self Compassion
@@ -23,13 +23,12 @@ library(qgraph)
 library(psych)
 library(skimr)  
 library(corrr)
+library(here)
 
 ``` 
 
 ```{r}
 data <- read_rds(file = here('4 Generated Datasets','Vars_At_Pre_Data.rds'))
-presence <- read_rds(file = here('4 Generated Datasets','Vars_At_Pre_Presence.rds'))
-
 
 data_all_timepoints <- read_rds(file = here('4 Generated Datasets','Vars_At_All_Timepoints.rds'))
 ```
@@ -64,9 +63,9 @@ get_correlations <- function(my_data){
 
 No correlations looking too high here which is good...
 ```{r}
-
-get_correlations(data)
-  
+data %>%
+  select(-ID, -Condition_Dummy, -Condition) %>%
+  get_correlations()
 ```
 
 # Estimate network model for Pre, excluding condition
@@ -90,43 +89,46 @@ colnames(responses)
 
 ```
 
-### Estimate Pre model
 
+
+# Generic functions
+
+## extract data for one timepoint
 
 ```{r}
 
-set.seed(08132021)
-fit_mgm <- mgm::mgm(data = responses, 
-         
-         # tells model that all variables are continuous
-         level = c(1,1,1,1,1,1,1), 
-         
-         # tells model that all variables have assumed Gaussian normal distribution
-         type = c("g","g","g","g","g","g","g"), 
-         
-         k =2,
-         
-         # per Jonas set this way
-         ruleReg = "OR")
-         
+getDataForTimepoint <- function(data_all_timepoints, my_timepoint){
+  data_to_return <- data_all_timepoints %>% filter(timepoint == my_timepoint) %>%
+    select(-timepoint, -ID) %>%
+    
+    # condition should not be modeled at Pre, so drop it in that case
+   # if_else(condition = (my_timepoint == 1), select(-Condition_Dummy), select(everything())) %>%
+    
+  # drop full rows with any missing observations
+    drop_na()
+  }
 
 ```
 
-## Plot Pre model estimates
+
+## Examine bivariates
+
+corrr package used for easy computation and display of the correlation matrix
+
 ```{r}
 
-width <- 9
-pdf(here('5 Tables and Figures', 'Pre Network.pdf'), width = width, height = width*.6)
-
-qgraph(fit_mgm$pairwise$wadj, 
-       layout = 'spring', repulsion = 1.3,
-       edge.color = fit_mgm$pairwise$edgecolor_cb, 
-        legend.cex=.4, 
-       vsize = 3.5, esize = 15, labels = c('HADS','IESR','FCR','SCS','EAC','AAQc','CESD'))
+get_correlations <- function(my_data){
+  my_data %>%
+  select(-Condition_Dummy) %>%
+  corrr::correlate() %>%
+  corrr::rearrange() %>%
+  corrr::shave() %>%
+  corrr::fashion()
+}
 
 ```
 
-# Generic functions for Mid, Post, 3mFU, 6mFU
+## fit MGM
 ```{r}
 
 fit_my_mgm <- function(my_data){
@@ -152,6 +154,7 @@ fit_my_mgm <- function(my_data){
 
 ```
 
+## plot MGM
 ```{r}
 
 plot_my_mgm <- function(my_mgm_fit){
@@ -171,68 +174,92 @@ plot_my_mgm <- function(my_mgm_fit){
 
 ```
 
-# Mid model
+## Wrapper to call everything
 
 ```{r}
 
-data.mid <- data_all_timepoints %>% filter(timepoint == 2) %>%
-  select(-timepoint, -ID) %>%
-  drop_na()
+runNetworkForOneTimepoint <- function(data_all_timepoints, timepoint){
+  
+  data <- getDataForTimepoint(data_all_timepoints, timepoint)
+
+  psych::describe(data)
+  
+  get_correlations(data)
+  
+  network.fit <- fit_my_mgm(data)
+  
+  plot_my_mgm(network.fit)
+
+
+}
+
 
 ```
 
-## Descriptives
+## Estimate Pre model
 
-### Univariates
-
-```{r}
-psych::describe(data.mid)
-
-```
-
-### Bivariates
-
-```{r}
-get_correlations(data.mid)
-
-```
-
-
-```{r}
-mid.fit <- fit_my_mgm(data.mid)
-
-plot_my_mgm(mid.fit)
-```
-
-# Post model
+This model has to be specified differently than the rest because we don't want the condition modeled
 
 ```{r}
 
-data.post <- data_all_timepoints %>% filter(timepoint == 3) %>%
-  select(-timepoint, -ID) %>%
-  drop_na()
+pre.data <- getDataForTimepoint(data_all_timepoints, 1) %>%
+  select(-Condition_Dummy)
 
-```
+psych::describe(pre.data)
+  
+set.seed(08132021)
 
-## Descriptives
+pre.fit <- mgm::mgm(data = pre.data, 
+         
+         # tells model that all variables are continuous
+         level = c(1,1,1,1,1,1,1), 
+         
+         # tells model that all variables have assumed Gaussian normal distribution
+         type = c("g","g","g","g","g","g","g"), 
+         
+         k =2,
+         
+         # per Jonas set this way
+         ruleReg = "OR")
 
-### Univariates
-
-```{r}
-psych::describe(data.post)
-
-```
-
-### Bivariates
-
-```{r}
-get_correlations(data.post)
+# plot
+my_edgeweights <- pre.fit$pairwise$wadj
+  
+  my_colorblind_edge_colors <- pre.fit$pairwise$edgecolor_cb
+  
+  qgraph(my_edgeweights, 
+         layout = 'spring', repulsion = 1.3,
+         edge.color = my_colorblind_edge_colors, 
+         legend.cex=.4, 
+         vsize = 3.5, esize = 15, labels = c('HADS','IESR','FCR','SCS','EAC','AAQc','CESD'))
+         
 
 ```
 
 
+## Mid
 ```{r}
-post.fit <- fit_my_mgm(data.post)
 
-plot_my_mgm(post.fit)
+runNetworkForOneTimepoint(data_all_timepoints, 2)
+
+```
+
+## Post
+
+```{r}
+runNetworkForOneTimepoint(data_all_timepoints, 3)
+
+
+```
+
+## 3m FU
+
+```{r}
+runNetworkForOneTimepoint(data_all_timepoints, 4)
+
+```
+
+## 6m FU
+```{r}
+runNetworkForOneTimepoint(data_all_timepoints, 5)
 ```
