@@ -38,7 +38,7 @@ data <- read_rds(file = here('4 Generated Datasets','Vars_At_Pre_Data.rds'))
 data_all_timepoints <- read_rds(file = here('4 Generated Datasets','Vars_At_All_Timepoints.rds'))
 ```
 
-# Generic functions
+# Single timepoint models - Generic functions
 
 ## extract data for one timepoint
 
@@ -47,9 +47,6 @@ data_all_timepoints <- read_rds(file = here('4 Generated Datasets','Vars_At_All_
 getDataForTimepoint <- function(data_all_timepoints, my_timepoint){
   data_to_return <- data_all_timepoints %>% filter(timepoint == my_timepoint) %>%
     select(-timepoint, -ID) %>%
-    
-    # condition should not be modeled at Pre, so drop it in that case
-   # if_else(condition = (my_timepoint == 1), select(-Condition_Dummy), select(everything())) %>%
     
   # drop full rows with any missing observations
     drop_na()
@@ -138,7 +135,9 @@ runNetworkForOneTimepoint <- function(data_all_timepoints, timepoint){
 }
 ```
 
-## Estimate Pre model
+# Estimate networks at one timepoint
+
+## Pre
 
 This model has to be specified differently than the rest because we don't want condition modeled
 
@@ -204,4 +203,104 @@ runNetworkForOneTimepoint(data_all_timepoints, 4)
 ## 6m FU
 ```{r}
 runNetworkForOneTimepoint(data_all_timepoints, 5)
+```
+
+
+# Change score models - setup and generic functions
+
+## Create dataset of change scores
+
+```{r}
+
+ChangeScores_data <- data_all_timepoints %>%
+  
+  pivot_longer(cols = HADS.A:CESD, names_to = 'instrument') %>%
+  pivot_wider(id_cols = c('ID','instrument','timepoint', 'Condition_Dummy'),
+              names_from = 'timepoint',
+              values_from = 'value') %>%
+  mutate(PreToMid = (`2` - `1`),
+         MidToPost = (`3` - `2`),
+         PostTo3mFU = (`4` - `3`),
+         `3mFUTo6mFU` = (`5` - `4`),
+         PreToPost = (`3` - `1`),
+         PreTo6mFU = (`5` - `1`)) %>%
+  # drop scores at each timepoint since change scores have now been computed
+  dplyr::select(-`1`, -`2`, -`3`, -`4`, -`5`) %>%
+  
+  # tidy
+  pivot_longer(cols = PreToMid:PreTo6mFU, names_to = 'ChangeScore') %>%
+  
+  # pivot to long by interval, by participant, wide by instrument
+  # consistent with format we will want to estimate networks
+  pivot_wider(names_from = instrument)
+
+```
+
+## Extract data for one interval
+
+```{r}
+
+getDataForInterval <- function(ChangeScores, my_interval){
+  data_to_return <- ChangeScores %>% filter(ChangeScore == my_interval) %>%
+    select(-ChangeScore, -ID) %>%
+    
+  # drop full rows with any missing observations
+    drop_na()
+}
+
+```
+
+```{r}
+
+runChangeScoreNetwork <- function(ChangeScore_data, my_interval){
+  
+  data <- getDataForInterval(ChangeScore_data, my_interval)
+
+  psych::describe(data)
+  
+  get_correlations(data)
+  
+  network.fit <- fit_my_mgm(data)
+  
+  plot_my_mgm(network.fit)
+
+}
+```
+# Change Score Network Models
+
+## PreToMid
+
+```{r}
+runChangeScoreNetwork(ChangeScores_data, 'PreToMid')
+```
+
+
+## MidToPost
+
+```{r}
+runChangeScoreNetwork(ChangeScores_data, 'MidToPost')
+```
+
+## PostTo3mFU
+
+```{r}
+runChangeScoreNetwork(ChangeScores_data, 'PostTo3mFU')
+```
+
+
+## 3mFUTo6mFU
+
+```{r}
+runChangeScoreNetwork(ChangeScores_data, '3mFUTo6mFU')
+```
+
+
+## PreToPost 
+```{r}
+runChangeScoreNetwork(ChangeScores_data, 'PreToPost')
+```
+
+## PreTo6mFU 
+```{r}
+runChangeScoreNetwork(ChangeScores_data, 'PreTo6mFU')
 ```
