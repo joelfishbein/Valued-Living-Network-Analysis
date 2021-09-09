@@ -1,6 +1,8 @@
 ---
 title: "Estimate and plot networks"
-output: html_notebook
+output:
+  html_document:
+    df_print: paged
 ---
 Per Jonas's suggestion I will attempt to model no more than 8 variables simultaneously.
 
@@ -14,11 +16,6 @@ EAC
 AAQc
 CESD
 
-Open questions:
-- play with lambda levels?
-- estimate moderated models?
-- 
-
 # Read in the data and libraries
 
 ```{r}
@@ -26,7 +23,6 @@ library(tidyverse)
 library(mgm)
 library(qgraph)
 library(psych)
-library(skimr)  
 library(corrr)
 library(here)
 
