@@ -28,48 +28,6 @@ raw_self_report_data <- read_csv('~/Research - Lives on HD/Valued Living Study/V
 
 # Create Datasets
 
-## Pre
-
-### Variables to analyze at Pre
-
-```{r}
-
-vars_at_pre <- raw_self_report_data %>%
-  select(ID,
-         Condition_Dummy = Condition, 
-         HADS.A_T1 = HAD_A_T1,
-         IESR.Total_T1 = Trauma_Mean_T1,
-         FCR_T1  = Mean_fearofrec_T1,
-         SCS_T1 = SelfComp_Mean_T1,
-         EAC.Total_T1 = EAC_Tot_T1,
-         AAQc_T1,
-         CESD_T1) %>%
-  mutate(Condition = factor(Condition_Dummy, 
-                               levels = c(-1,1), 
-                               labels = c("MEUC", "ACT")))
-
-vars_at_pre.presence <- vars_at_pre %>%
-  mutate(across(everything(), 
-                ~1 * (. != 0)))
-
-
-vars_at_pre.presence
-```
-
-### Save datasets
-
-```{r}
-
-write_rds(x = vars_at_pre,
-          file = here('4 Generated Datasets','Vars_At_Pre_Data.rds'))
-
-write_rds(x = vars_at_pre.presence,
-          file = here('4 Generated Datasets','Vars_At_Pre_Presence.rds'))
-
-```
-
-
-
 ## All data
 
 ### Variables to analyze at Pre
@@ -86,6 +44,11 @@ data_to_export <- raw_self_report_data %>%
          starts_with("EAC_Tot"),
          starts_with("AAQc_T"),
          starts_with("CESD_T")) %>%
+  
+  # change dummy variable to be 0 is UC, 1 is ACT, which works better
+  # with how the categorical variables work for the mgm() package
+  mutate(Condition_Dummy = ifelse(Condition_Dummy == -1, 0, 1)) %>%
+  
 
   # fix naming
   rename_with(.fn = ~str_replace(.x, "HAD_A", "HADS.A")) %>%
@@ -100,7 +63,6 @@ data_to_export <- raw_self_report_data %>%
   # pivot to long by timepoint, wide by instrument
   pivot_wider(names_from = instrument)
 
-data_to_export
 ```
 
 
