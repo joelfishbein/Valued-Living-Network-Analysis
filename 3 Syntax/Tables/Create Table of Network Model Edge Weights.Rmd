@@ -1,0 +1,14 @@
+---
+title: "Create Table of Network Model Edge Weights"
+output: html_notebook
+---
+
+# Read in libraries and data
+```{r}
+library(tidyverse)
+
+PreToMid.fit <- read_rds(here('Fitted model objects','PreToMid.fit'))
+
+```
+
+
