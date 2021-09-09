@@ -246,19 +246,21 @@ getDataForInterval <- function(ChangeScores, my_interval){
 
 ```
 
+## Wrapper
+
 ```{r}
 
 runChangeScoreNetwork <- function(ChangeScore_data, my_interval){
   
   data <- getDataForInterval(ChangeScore_data, my_interval)
 
-  psych::describe(data)
+  #psych::describe(data)
   
-  get_correlations(data)
+  #get_correlations(data)
   
   network.fit <- fit_my_mgm(data)
   
-  plot_my_mgm(network.fit)
+  return(network.fit)
 
 }
 ```
@@ -267,36 +269,60 @@ runChangeScoreNetwork <- function(ChangeScore_data, my_interval){
 ## PreToMid
 
 ```{r}
-runChangeScoreNetwork(ChangeScores_data, 'PreToMid')
+PreToMid.fit <- runChangeScoreNetwork(ChangeScores_data, 'PreToMid')
+
+write_rds(x = PreToMid.fit, file = here('Fitted model objects','PreToMid.fit'))
+
+
 ```
 
 
 ## MidToPost
 
 ```{r}
-runChangeScoreNetwork(ChangeScores_data, 'MidToPost')
+MidToPost.fit <- runChangeScoreNetwork(ChangeScores_data, 'MidToPost')
+
+write_rds(x = MidToPost.fit, file = here('Fitted model objects','MidToPost.fit'))
+
+
 ```
 
 ## PostTo3mFU
 
 ```{r}
-runChangeScoreNetwork(ChangeScores_data, 'PostTo3mFU')
+PostTo3MFU.fit <- runChangeScoreNetwork(ChangeScores_data, 'PostTo3mFU')
+
+write_rds(x = PostTo3MFU.fit, file = here('Fitted model objects','PostTo3MFU.fit'))
+
+
 ```
 
 
 ## 3mFUTo6mFU
 
 ```{r}
-runChangeScoreNetwork(ChangeScores_data, '3mFUTo6mFU')
+my3mTo6mFU.fit <- runChangeScoreNetwork(ChangeScores_data, '3mFUTo6mFU')
+
+write_rds(x = my3mTo6mFU.fit , file = here('Fitted model objects','my3mTo6mFU.fit'))
+
+
 ```
 
 
 ## PreToPost 
 ```{r}
-runChangeScoreNetwork(ChangeScores_data, 'PreToPost')
+PreToPost.fit <- runChangeScoreNetwork(ChangeScores_data, 'PreToPost')
+
+write_rds(x = PreToPost.fit , file = here('Fitted model objects','PreToPost.fit'))
+
+
 ```
 
 ## PreTo6mFU 
 ```{r}
-runChangeScoreNetwork(ChangeScores_data, 'PreTo6mFU')
+PreTo6mFU.fit <- runChangeScoreNetwork(ChangeScores_data, 'PreTo6mFU')
+
+write_rds(x = PreTo6mFU.fit , file = here('Fitted model objects','PreTo6mFU.fit'))
+
+
 ```
