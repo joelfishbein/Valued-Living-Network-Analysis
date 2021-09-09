@@ -1,13 +1,23 @@
 ---
 title: "Create Table of Network Model Edge Weights"
-output: html_notebook
+output:
+  html_document:
+    df_print: paged
 ---
 
 # Read in libraries and data
 ```{r}
 library(tidyverse)
+library(kableExtra)
+library(here)
 
 PreToMid.fit <- read_rds(here('Fitted model objects','PreToMid.fit'))
+MidToPost.fit <- read_rds(here('Fitted model objects','MidToPost.fit'))
+PostTo3MFU.fit <- read_rds(here('Fitted model objects','PostTo3MFU.fit'))
+my3mTo6mFU.fit <- read_rds(here('Fitted model objects','my3mTo6mFU.fit'))
+
+PreToPost.fit <- read_rds(here('Fitted model objects','PreToPost.fit'))
+PreTo6mFU.fit <- read_rds(here('Fitted model objects','PreTo6mFU.fit'))
 
 ```
 
@@ -51,11 +61,47 @@ getTidyAdjacencyMatrix <- function(mgm_fit){
     
     # format as long by variable 1 and variable 2
     pivot_longer(cols = ACTorMEUC:CESD, names_to = 'variable_name_2') %>%
-    mutate(value = round(value,2))
+    mutate(value = round(value,2)) %>%
+    
+    # remove redundant entries
+    
+   mutate(Var = map2_chr(variable_name_1, variable_name_2, ~toString(sort(c(.x, .y))))) %>%
+  distinct(Var, .keep_all = TRUE) %>%
+  select(-Var)
   
-  return(adjancency.long)
+  return(adjacency.long)
   
 }
+
+```
+
+# Create table of adjacent intervals
+
+
+```{r}
+
+my_table <- tibble(`Variable 1` = getTidyAdjacencyMatrix(PreToMid.fit) %>% pull(variable_name_1),
+                   `Variable 2` = getTidyAdjacencyMatrix(PreToMid.fit) %>% pull(variable_name_2),
+                   `Pre to Mid` = getTidyAdjacencyMatrix(PreToMid.fit) %>% pull(value),
+                   `Mid To Post` = getTidyAdjacencyMatrix(MidToPost.fit) %>% pull(value),
+                   `Post to 3M FU` = getTidyAdjacencyMatrix(PostTo3MFU.fit) %>% pull(value),
+                   `3M FU to 6M FU` = getTidyAdjacencyMatrix(my3mTo6mFU.fit) %>% pull(value),
+                   `Pre to Post` = getTidyAdjacencyMatrix(PreToPost.fit) %>% pull(value),
+                   `Pre To 6M FU` = getTidyAdjacencyMatrix(PreTo6mFU.fit) %>% pull(value))
+  
+```
+
+# Print with color gradient
+
+```{r}
+
+my_table %>%
+  mutate_if(is.numeric, function(x) {
+    cell_spec(x, color = spec_color(x, begin = 0, end = .6, option = "A"))}) %>%
+  kable(escape = F, align = "c", caption = 'Adjacency Matrices of Networks Computed Over Intervals') %>%
+  #kable_styling(bootstrap_options = c("striped", "hover", "condensed"), full_width = F) %>%
+  kable_classic(html_font = 'Times New Roman', full_width = FALSE) %>%
+  column_spec(7:8, border_left = TRUE, border_right = TRUE)
 
 ```
 
