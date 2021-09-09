@@ -11,4 +11,53 @@ PreToMid.fit <- read_rds(here('Fitted model objects','PreToMid.fit'))
 
 ```
 
+# Set names of rows and columns
+
+The network model itself does not store the names of the nodes, so input them here manually. Must match the order in which they were entered into the network.
+
+```{r}
+
+var_names <- tibble(names = c('ACTorMEUC','HADS','IESR','FCR','SCS','EAC','AAQc','CESD'))
+```
+
+# Generic function to create tidy adjacency matrix
+
+```{r}
+
+
+getTidyAdjacencyMatrix <- function(mgm_fit){
+  
+  # signs has 0s (undefined values) and NAs (non-sig edge values)
+  # in it. We will just replace those with 1s for now.
+  signs.tibble <- mgm_fit$pairwise$signs %>% 
+    as_tibble() %>%
+    mutate(across(everything(), ~replace(.x, .x %in% c(NA,0), 1)))
+  
+  adjacency.tibble <- mgm_fit$pairwise$wadj %>%
+    as_tibble()
+  
+  # adjacency 
+  adjacency_with_signs.tibble <- (signs.tibble * adjacency.tibble)
+  
+  
+  adjacency.long <- 
+    adjacency_with_signs.tibble %>%
+    
+    # rename columns as variable names
+    rename_all(~var_names %>% pull(names)) %>%
+    
+    # add row names as variable names again
+    mutate(variable_name_1 = var_names$names) %>%
+    
+    # format as long by variable 1 and variable 2
+    pivot_longer(cols = ACTorMEUC:CESD, names_to = 'variable_name_2') %>%
+    mutate(value = round(value,2))
+  
+  return(adjancency.long)
+  
+}
+
+```
+
+
 
