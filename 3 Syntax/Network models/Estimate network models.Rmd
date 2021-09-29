@@ -1,32 +1,29 @@
 ---
 title: "Estimate network models"
 output:
+  pdf_document:
+    toc: yes
   html_document:
-    toc: true
-    toc_float: true
+    toc: yes
+    toc_float: yes
 ---
 
 TO DISCUSS:
 - lasso parameter? (don't do this)
 - remove variables? (try after bootstrapping)
 - simulation/bootstrapping? (do this first)
-
-
 - moderation?
 
-- k folds validation?
-
-
 Condition-HADS:  Est    Quantiles of bootstrapped sampling dist    % bootstrapped samples it's nonzero in
-
-
-
 
 (no CI because regularization removes/shrinks low estimates)
 
 # Read in the data and libraries
 
 ```{r}
+
+knitr::opts_chunk$set(error = TRUE)
+
 library(tidyverse)
 library(mgm)
 library(qgraph)
@@ -37,7 +34,6 @@ library(here)
 ``` 
 
 ```{r}
-data <- read_rds(file = here('4 Generated Datasets','Vars_At_Pre_Data.rds'))
 
 data_all_timepoints <- read_rds(file = here('4 Generated Datasets','Vars_At_All_Timepoints.rds'))
 ```
@@ -253,6 +249,7 @@ getDataForInterval <- function(ChangeScores, my_interval){
     
   # drop full rows with any missing observations
     drop_na()
+  return(data_to_return)
 }
 
 ```
@@ -287,7 +284,6 @@ write_rds(x = PreToMid.fit, file = here('Fitted model objects','PreToMid.fit'))
 
 ```
 
-
 ## MidToPost
 
 ```{r}
@@ -321,13 +317,40 @@ write_rds(x = my3mTo6mFU.fit , file = here('Fitted model objects','my3mTo6mFU.fi
 
 
 ## PreToPost 
+
 ```{r}
-PreToPost.fit <- runChangeScoreNetwork(ChangeScores_data, 'PreToPost')
+
 
 write_rds(x = PreToPost.fit , file = here('Fitted model objects','PreToPost.fit'))
 
+```
+
+\newpage
+
+# Error in resample -- see below
+
+Here is the first few rows of the n x p matrix
+
+```{r}
+
+head(getDataForInterval(ChangeScores_data, 'PreToPost'))
 
 ```
+
+Here is the call to run the network, and then resample. Resample returns an error.
+
+```{r message=TRUE, warning=TRUE}
+
+PreToPost.fit <- runChangeScoreNetwork(ChangeScores_data, 'PreToPost')
+
+
+PreToPost.fit.boot <- resample(object = PreToPost.fit, 
+                               data = getDataForInterval(ChangeScores_data, 'PreToPost'), 
+                               nB = 50)
+
+
+```
+\newpage
 
 ## PreTo6mFU 
 ```{r}
