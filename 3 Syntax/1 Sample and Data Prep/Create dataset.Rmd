@@ -21,7 +21,7 @@ XX
 library(tidyverse)
 library(here)
 
-raw_self_report_data <- read_csv('~/Research - Lives on HD/Valued Living Study/Valued Living Study raw data/Current/data from Qualtrics/RCT_Qualtrics_Unabridged_10.12.20.csv', na = ("#NULL!"))
+  raw_self_report_data <- read_csv('~/On HD/Raw data/Valued Living Study/RCT_Qualtrics_Unabridged_10.12.20.csv', na = ("#NULL!"))
 
 
 ```
