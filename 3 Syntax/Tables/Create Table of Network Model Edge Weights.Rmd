@@ -1,15 +1,26 @@
 ---
-title: "Create Table of Network Model Edge Weights"
+title: "Create Tables of Network Model Edge Weights"
 output:
   html_document:
-    df_print: paged
+    toc: true
+    toc_float: true
 ---
 
 # Read in libraries and data
 ```{r}
+
 library(tidyverse)
 library(kableExtra)
 library(here)
+
+
+# Single timepoint models
+Pre.fit <- read_rds(here('Fitted model objects','Pre.fit'))
+Mid.fit <- read_rds(here('Fitted model objects','Mid.fit'))
+Post.fit <- read_rds(here('Fitted model objects','Post.fit'))
+my3mFU.fit <- read_rds(here('Fitted model objects','my3mFU.fit'))
+my6mFU.fit <- read_rds(here('Fitted model objects','my6mFU.fit'))
+
 
 PreToMid.fit <- read_rds(here('Fitted model objects','PreToMid.fit'))
 MidToPost.fit <- read_rds(here('Fitted model objects','MidToPost.fit'))
@@ -75,7 +86,78 @@ getTidyAdjacencyMatrix <- function(mgm_fit){
 
 ```
 
-# Create table of adjacent intervals
+
+# Create table of single timepoint models
+
+## Get Pre adjacency matrix
+
+```{r}
+
+Pre.var_names <- tibble(names = c('HADS','IESR','FCR','SCS','EAC','AAQc','CESD'))
+
+Pre.signs.tibble <- Pre.fit$pairwise$signs %>% 
+    as_tibble() %>%
+    mutate(across(everything(), ~replace(.x, .x %in% c(NA,0), 1)))
+  
+Pre.adjacency.tibble <- Pre.fit$pairwise$wadj %>%
+    as_tibble()
+  
+  # adjacency 
+  Pre.adjacency_with_signs.tibble <- (Pre.signs.tibble * Pre.adjacency.tibble)
+  
+  
+Pre.adjacency.long <- 
+    Pre.adjacency_with_signs.tibble %>%
+    
+    # rename columns as variable names
+    rename_all(~Pre.var_names %>% pull(names)) %>%
+    
+    # add row names as variable names again
+    mutate(variable_name_1 = Pre.var_names$names) %>%
+    
+    # format as long by variable 1 and variable 2
+    pivot_longer(cols = HADS:CESD, names_to = 'variable_name_2') %>%
+    mutate(value = round(value,2)) %>%
+    
+    # remove redundant entries
+    
+   mutate(Var = map2_chr(variable_name_1, variable_name_2, ~toString(sort(c(.x, .y))))) %>%
+  distinct(Var, .keep_all = TRUE) %>%
+  select(-Var)
+
+
+Pre.adjacency.long
+```
+
+```{r}
+
+single_timepoint_table <- left_join(getTidyAdjacencyMatrix(Mid.fit),
+                         Pre.adjacency.long,
+                        by = c("variable_name_1", "variable_name_2")) %>%
+  rename(Pre = value.y, Mid = value.x) %>%
+  relocate(Pre, .before = Mid) %>%
+  mutate(Post = getTidyAdjacencyMatrix(Post.fit) %>% pull(value),
+         `3m FU` = getTidyAdjacencyMatrix(my3mFU.fit) %>% pull(value),
+         `6m FU` = getTidyAdjacencyMatrix(my6mFU.fit) %>% pull(value))
+
+single_timepoint_table
+
+```
+
+# Print with color gradient
+
+```{r}
+
+single_timepoint_table %>%
+  mutate_if(is.numeric, function(x) {
+    cell_spec(x, color = spec_color(x, begin = 0, end = .6, option = "A"))}) %>%
+  kable(escape = F, align = "c", caption = 'Adjacency Matrices of Networks Computed At Single Timepoints') %>%
+  #kable_styling(bootstrap_options = c("striped", "hover", "condensed"), full_width = F) %>%
+  kable_classic(html_font = 'Times New Roman', full_width = FALSE)
+
+```
+
+# Create table of intervals
 
 
 ```{r}
@@ -104,6 +186,4 @@ my_table %>%
   column_spec(7:8, border_left = TRUE, border_right = TRUE)
 
 ```
-
-
 

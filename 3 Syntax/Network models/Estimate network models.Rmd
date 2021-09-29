@@ -1,20 +1,28 @@
 ---
-title: "Estimate and plot networks"
+title: "Estimate network models"
 output:
   html_document:
-    df_print: paged
+    toc: true
+    toc_float: true
 ---
-Per Jonas's suggestion I will attempt to model no more than 8 variables simultaneously.
 
-The seven variables Joanna and I chose in descending order of importance to keep in the model are:
+TO DISCUSS:
+- lasso parameter? (don't do this)
+- remove variables? (try after bootstrapping)
+- simulation/bootstrapping? (do this first)
 
-HADS-A
-IES-R
-FCR
-Self Compassion
-EAC
-AAQc
-CESD
+
+- moderation?
+
+- k folds validation?
+
+
+Condition-HADS:  Est    Quantiles of bootstrapped sampling dist    % bootstrapped samples it's nonzero in
+
+
+
+
+(no CI because regularization removes/shrinks low estimates)
 
 # Read in the data and libraries
 
@@ -92,25 +100,36 @@ fit_my_mgm <- function(my_data){
   
 }
 
-```
-
-## plot MGM
-```{r}
-
-plot_my_mgm <- function(my_mgm_fit){
+fit_my_mgm.moderated <- function(my_data){
   
-  my_edgeweights <- my_mgm_fit$pairwise$wadj
+  # could examine just specific moderation effects
+  # as written, allows all edges to vary by condition
   
-  my_colorblind_edge_colors <- my_mgm_fit$pairwise$edgecolor_cb
+  set.seed(08132021)
+  fit_mgm <- mgm::mgm(data = my_data, 
+                      
+                      # first variable (condition) has 2 conditions, all others are continuous
+                      level = c(2,1,1,1,1,1,1,1), 
+                      
+                      # first variable (condition) is categorical, all others 
+                      # have assumed Gaussian normal ('g') distributions
+                      type = c("c","g","g","g","g","g","g","g"), 
+                      
+                      moderator = 1, #check syntax
+                      
+                      # per Jonas set this way
+                      ruleReg = "OR")
   
-  qgraph(my_edgeweights, 
-         layout = 'spring', repulsion = 1.3,
-         edge.color = my_colorblind_edge_colors, 
-         legend.cex=.4, 
-         vsize = 3.5, esize = 15, labels = c('ACT or MEUC','HADS','IESR','FCR','SCS','EAC','AAQc','CESD'))
+  return(fit_mgm)
+  
 }
-  
+
 ```
+
+
+bootstrap with resample() - 1000 replicants is sufficient, maybe 10K
+can loop thru models and look to see number of samples showing indirect effects of interest
+
 
 ## Wrapper to call everything
 
@@ -120,13 +139,14 @@ runNetworkForOneTimepoint <- function(data_all_timepoints, timepoint){
   
   data <- getDataForTimepoint(data_all_timepoints, timepoint)
 
-  psych::describe(data)
+  #psych::describe(data)
   
-  get_correlations(data)
+  #get_correlations(data)
   
   network.fit <- fit_my_mgm(data)
   
-  plot_my_mgm(network.fit)
+  return(network.fit)
+  #plot_my_mgm(network.fit)
 
 }
 ```
@@ -139,14 +159,14 @@ This model has to be specified differently than the rest because we don't want c
 
 ```{r}
 
-pre.data <- getDataForTimepoint(data_all_timepoints, 1) %>%
+Pre.data <- getDataForTimepoint(data_all_timepoints, 1) %>%
   select(-Condition_Dummy)
 
-psych::describe(pre.data)
+#psych::describe(Pre.data)
   
 set.seed(08132021)
 
-pre.fit <- mgm::mgm(data = pre.data, 
+Pre.fit <- mgm::mgm(data = Pre.data, 
          
          # tells model that all variables are continuous
          level = c(1,1,1,1,1,1,1), 
@@ -159,48 +179,39 @@ pre.fit <- mgm::mgm(data = pre.data,
          # per Jonas set this way
          ruleReg = "OR")
 
-# plot
-my_edgeweights <- pre.fit$pairwise$wadj
-  
-  my_colorblind_edge_colors <- pre.fit$pairwise$edgecolor_cb
-  
-  qgraph(my_edgeweights, 
-         layout = 'spring', repulsion = 1.3,
-         edge.color = my_colorblind_edge_colors, 
-         legend.cex=.4, 
-         vsize = 3.5, esize = 15, labels = c('HADS','IESR','FCR','SCS','EAC','AAQc','CESD'))
-         
+     
 
 ```
 
 
-## Mid
+## Mid, Post, 3mFU, 6mFU
 ```{r}
 
-runNetworkForOneTimepoint(data_all_timepoints, 2)
+Mid.fit <- runNetworkForOneTimepoint(data_all_timepoints, 2)
+
+Post.fit <- runNetworkForOneTimepoint(data_all_timepoints, 3)
+
+my3mFU.fit <- runNetworkForOneTimepoint(data_all_timepoints, 4)
+
+my6mFU.fit <- runNetworkForOneTimepoint(data_all_timepoints, 5)
 
 ```
 
-## Post
+## Save model fits
 
 ```{r}
-runNetworkForOneTimepoint(data_all_timepoints, 3)
 
+write_rds(x = Pre.fit , file = here('Fitted model objects','Pre.fit'))
+
+write_rds(x = Mid.fit , file = here('Fitted model objects','Mid.fit'))
+
+write_rds(x = Post.fit , file = here('Fitted model objects','Post.fit'))
+
+write_rds(x = my3mFU.fit , file = here('Fitted model objects','my3mFU.fit'))
+
+write_rds(x = my6mFU.fit , file = here('Fitted model objects','my6mFU.fit'))
 
 ```
-
-## 3m FU
-
-```{r}
-runNetworkForOneTimepoint(data_all_timepoints, 4)
-
-```
-
-## 6m FU
-```{r}
-runNetworkForOneTimepoint(data_all_timepoints, 5)
-```
-
 
 # Change score models - setup and generic functions
 
