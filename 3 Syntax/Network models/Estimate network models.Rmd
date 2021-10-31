@@ -46,7 +46,7 @@ data_all_timepoints <- read_rds(file = here('4 Generated Datasets','Vars_At_All_
 
 getDataForTimepoint <- function(data_all_timepoints, my_timepoint){
   data_to_return <- data_all_timepoints %>% filter(timepoint == my_timepoint) %>%
-    select(-timepoint, -ID) %>%
+    select(-timepoint, -ID, -CESD) %>%
     
   # drop full rows with any missing observations
     drop_na()
@@ -81,11 +81,11 @@ fit_my_mgm <- function(my_data){
   fit_mgm <- mgm::mgm(data = my_data, 
                       
                       # first variable (condition) has 2 conditions, all others are continuous
-                      level = c(2,1,1,1,1,1,1,1), 
+                      level = c(2,1,1,1,1,1,1), 
                       
                       # first variable (condition) is categorical, all others 
                       # have assumed Gaussian normal ('g') distributions
-                      type = c("c","g","g","g","g","g","g","g"), 
+                      type = c("c","g","g","g","g","g","g"), 
                       
                       k =2,
                       
@@ -105,11 +105,11 @@ fit_my_mgm.moderated <- function(my_data){
   fit_mgm <- mgm::mgm(data = my_data, 
                       
                       # first variable (condition) has 2 conditions, all others are continuous
-                      level = c(2,1,1,1,1,1,1,1), 
+                      level = c(2,1,1,1,1,1,1), 
                       
                       # first variable (condition) is categorical, all others 
                       # have assumed Gaussian normal ('g') distributions
-                      type = c("c","g","g","g","g","g","g","g"), 
+                      type = c("c","g","g","g","g","g","g"), 
                       
                       moderator = 1, #check syntax
                       
@@ -217,7 +217,7 @@ write_rds(x = my6mFU.fit , file = here('Fitted model objects','my6mFU.fit'))
 
 ChangeScores_data <- data_all_timepoints %>%
   
-  pivot_longer(cols = HADS.A:CESD, names_to = 'instrument') %>%
+  pivot_longer(cols = HADS.A:AAQc, names_to = 'instrument') %>%
   pivot_wider(id_cols = c('ID','instrument','timepoint', 'Condition_Dummy'),
               names_from = 'timepoint',
               values_from = 'value') %>%
@@ -343,9 +343,10 @@ Here is the call to run the network, and then resample. Resample returns an erro
 
 PreToPost.fit <- runChangeScoreNetwork(ChangeScores_data, 'PreToPost')
 
+my_data <- getDataForInterval(ChangeScores_data, 'PreToPost')
 
 PreToPost.fit.boot <- resample(object = PreToPost.fit, 
-                               data = getDataForInterval(ChangeScores_data, 'PreToPost'), 
+                               data = my_data, 
                                nB = 50)
 
 
@@ -360,3 +361,7 @@ write_rds(x = PreTo6mFU.fit , file = here('Fitted model objects','PreTo6mFU.fit'
 
 
 ```
+
+
+
+
