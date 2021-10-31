@@ -1,0 +1,109 @@
+---
+title: "Create Bootstrapped Network Model Table"
+output: html_notebook
+---
+Condition-HADS:  Est    Quantiles of bootstrapped sampling dist    % bootstrapped samples it's nonzero in
+
+# Read in libraries and data
+```{r}
+
+library(tidyverse)
+library(kableExtra)
+library(here)
+
+PreToPost.fit <- read_rds(here('Fitted model objects','PreToPost.fit.bootstrap_nB_500'))
+
+```
+
+```{r}
+hist(PreToPost.fit$bootParameters[1, 4, ],
+main = "",
+xlab = "Parameter Estimate")
+
+plotRes(object = PreToPost.fit.boot,
+quantiles = c(0.05, .95))
+
+
+```
+
+
+# Function for obtaining estimates and quantiles
+
+Uses part of https://github.com/cran/mgm/blob/master/R/plotRes.R
+```{r}
+
+getEdgeEstimates <- function(object){
+  
+  # the following is copied from Jonas's code
+  
+  quantiles <- c(.05, .95)
+  
+  dims <- dim(object$bootParameters)
+    p <- dims[1]
+    nB <- dims[3]
+    n_pars <- p*(p-1) / 2
+    
+    # Collapse into edge x property matrix
+    tar_mat <- matrix(NA, nrow=n_pars, ncol = 6)
+    colnames(tar_mat) <- c("Variable A", "Variable B", "Mean", "qtl_low", "qtl_high", "propLtZ")
+    
+    counter <- 1
+    for(row in 1:p) {
+      for(col in row:p) {
+        if(row!=col){
+          
+          # Variable ids
+          tar_mat[counter, 1] <- row
+          tar_mat[counter, 2] <- col
+          
+          # Quantiles
+          qtls <- quantile(object$bootParameters[row, col, ], probs = quantiles)
+          tar_mat[counter, 3] <- mean(object$bootParameters[row, col, ])
+          tar_mat[counter, 4] <- qtls[1]
+          tar_mat[counter, 5] <- qtls[2]
+          tar_mat[counter, 6] <- mean(abs(object$bootParameters[row, col, ]) > 0) # proportion estimates > 0
+          
+          # update counter
+          counter <- counter + 1
+        }
+      }
+    }
+    
+    # now that the matrix is completed, new code to turn it into a tibble with my variable names embedded
+    
+    variable_names <- tibble(numbers = as.double(c(1:7)),
+                             names = c( 'ACTorMEUC', 'HADS','IESR', 'FCR', 'SCS', 'EAC', 'AAQc'))
+    
+    EdgeWeights <-
+      tar_mat %>%
+      as_tibble %>%
+      
+      # pull in variable names for each variable column
+      left_join(variable_names, by = c ("Variable A" = "numbers")) %>%
+      select(-`Variable A`) %>%
+      rename(`Variable 1` = names) %>%
+      left_join(variable_names, by = c ("Variable B" = "numbers")) %>%
+      select(-`Variable B`) %>%
+      rename(`Variable 2` = names) %>%
+      
+      # rearrange column order
+      relocate(`Variable 2`, .before = Mean) %>%
+      relocate(`Variable 1`, .before = `Variable 2`) %>%
+      
+      # rename columns
+      rename(`Mean Estimate of Edge Weight` = Mean,
+            `5%` = qtl_low,
+             `95%` = qtl_high,
+             `% Samples Where Edge Was Nonzero` = propLtZ)
+    
+}
+
+```
+
+
+```{r}
+
+PreToPost.edgeEstimates <- getEdgeEstimates(PreToPost.fit.boot)
+
+PreToPost.edgeEstimates
+```
