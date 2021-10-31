@@ -2,7 +2,6 @@
 title: "Create Bootstrapped Network Model Table"
 output: html_notebook
 ---
-Condition-HADS:  Est    Quantiles of bootstrapped sampling dist    % bootstrapped samples it's nonzero in
 
 # Read in libraries and data
 ```{r}
@@ -107,3 +106,4 @@ PreToPost.edgeEstimates <- getEdgeEstimates(PreToPost.fit.boot)
 
 PreToPost.edgeEstimates
 ```
+
