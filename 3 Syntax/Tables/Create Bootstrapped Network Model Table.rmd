@@ -10,20 +10,17 @@ library(tidyverse)
 library(kableExtra)
 library(here)
 
-PreToPost.fit <- read_rds(here('Fitted model objects','PreToPost.fit.bootstrap_nB_500'))
+PreToMid.fit <- read_rds(here('Fitted model objects','PreToMid.fit.boot'))
+MidToPost.fit <- read_rds(here('Fitted model objects','MidToPost.fit.boot'))
+PostTo3MFU.fit <- read_rds(here('Fitted model objects','PostTo3MFU.fit.boot'))
+my3mTo6mFU.fit <- read_rds(here('Fitted model objects','my3mTo6mFU.fit.boot'))
+
+PreToPost.fit <- read_rds(here('Fitted model objects','PreToPost.fit.boot'))
+PreTo6mFU.fit <- read_rds(here('Fitted model objects','PreTo6mFU.fit.boot'))
 
 ```
 
-```{r}
-hist(PreToPost.fit$bootParameters[1, 4, ],
-main = "",
-xlab = "Parameter Estimate")
 
-plotRes(object = PreToPost.fit.boot,
-quantiles = c(0.05, .95))
-
-
-```
 
 
 # Function for obtaining estimates and quantiles
@@ -31,7 +28,8 @@ quantiles = c(0.05, .95))
 Uses part of https://github.com/cran/mgm/blob/master/R/plotRes.R
 ```{r}
 
-getEdgeEstimates <- function(object){
+
+getEdgeEstimates <- function(object, model_name){
   
   # the following is copied from Jonas's code
   
@@ -93,17 +91,47 @@ getEdgeEstimates <- function(object){
       rename(`Mean Estimate of Edge Weight` = Mean,
             `5%` = qtl_low,
              `95%` = qtl_high,
-             `% Samples Where Edge Was Nonzero` = propLtZ)
+             `% Samples Where Edge Was Nonzero` = propLtZ) %>%
+      mutate(`Model` = model_name)
+    
+    return(EdgeWeights)
     
 }
 
 ```
 
-
+# Print table 
 ```{r}
 
-PreToPost.edgeEstimates <- getEdgeEstimates(PreToPost.fit.boot)
+bind_rows(
+  getEdgeEstimates(PreToMid.fit, "1 - Pre to Mid"),
+  getEdgeEstimates(MidToPost.fit, "2 - Mid to Post"),
+  getEdgeEstimates(PostTo3MFU.fit, "3 - Post to 3M FU"),
+  getEdgeEstimates(my3mTo6mFU.fit, "4 - 3M to 6M FU"),
+  getEdgeEstimates(PreToPost.fit, "5 - Pre to Post"),
+  getEdgeEstimates(PreTo6mFU.fit, "6 - Pre to 6M FU")) %>%
+  pivot_wider(names_from = `Model`, values_from = c(`Mean Estimate of Edge Weight`:`% Samples Where Edge Was Nonzero`),     names_glue = "{Model} {.value}") %>%
+  
+  relocate(starts_with("1 - "), .before = starts_with("2 - ")) %>%
+  relocate(starts_with("2 - "), .before = starts_with("3 - ")) %>%
+  relocate(starts_with("3 - "), .before = starts_with("4 - ")) %>%
+  relocate(starts_with("4 - "), .before = starts_with("5 - ")) %>%
+  relocate(starts_with("5 - "), .before = starts_with("6 - ")) %>%
+  
+  kable(escape = F, 
+        align = "c", 
+        caption = 'Bootstrapped Models', 
+        digits = 2, 
+        col.names = c("Variable 1", "Variable 2", rep(c("Est","5%","95%", "% Samples Where Nonzero"),times = 6))) %>%
+  #kable_styling(bootstrap_options = c("striped", "hover", "condensed"), full_width = F) %>%
+  kable_classic(html_font = 'Times New Roman', full_width = FALSE) %>%
+  add_header_above(c(" " = 2, 
+                   "Pre to Mid" = 4, 
+                   "Mid to Post" = 4,
+                   "Post to 3M FU" = 4,
+                   "3M FU to 6M FU" = 4,
+                   "Pre to Post" = 4,
+                   "Pre to 6m FU" = 4))
 
-PreToPost.edgeEstimates
 ```
 
