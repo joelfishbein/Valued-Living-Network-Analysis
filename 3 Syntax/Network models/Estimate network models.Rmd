@@ -258,17 +258,18 @@ getDataForInterval <- function(ChangeScores, my_interval){
 
 ```{r}
 
-runChangeScoreNetwork <- function(ChangeScore_data, my_interval){
+runBootstrappedChangeScoreNetwork <- function(ChangeScore_data, my_interval, nB = 5000){
   
-  data <- getDataForInterval(ChangeScore_data, my_interval)
-
-  #psych::describe(data)
+  data <- getDataForInterval(ChangeScore_data, my_interval) %>%
+    as.matrix()
   
-  #get_correlations(data)
+  fit <- fit_my_mgm(data)
   
-  network.fit <- fit_my_mgm(data)
+  fit.boot <- resample(object = fit, 
+                               data = data, 
+                               nB = nB)
   
-  return(network.fit)
+  return(fit.boot)
 
 }
 ```
@@ -277,9 +278,9 @@ runChangeScoreNetwork <- function(ChangeScore_data, my_interval){
 ## PreToMid
 
 ```{r}
-PreToMid.fit <- runChangeScoreNetwork(ChangeScores_data, 'PreToMid')
+PreToMid.fit <- runBootstrappedChangeScoreNetwork(ChangeScores_data, 'PreToMid')
 
-write_rds(x = PreToMid.fit, file = here('Fitted model objects','PreToMid.fit'))
+write_rds(x = PreToMid.fit, file = here('Fitted model objects','PreToMid.fit.boot'))
 
 
 ```
@@ -287,9 +288,9 @@ write_rds(x = PreToMid.fit, file = here('Fitted model objects','PreToMid.fit'))
 ## MidToPost
 
 ```{r}
-MidToPost.fit <- runChangeScoreNetwork(ChangeScores_data, 'MidToPost')
+MidToPost.fit <- runBootstrappedChangeScoreNetwork(ChangeScores_data, 'MidToPost')
 
-write_rds(x = MidToPost.fit, file = here('Fitted model objects','MidToPost.fit'))
+write_rds(x = MidToPost.fit, file = here('Fitted model objects','MidToPost.fit.boot'))
 
 
 ```
@@ -297,9 +298,9 @@ write_rds(x = MidToPost.fit, file = here('Fitted model objects','MidToPost.fit')
 ## PostTo3mFU
 
 ```{r}
-PostTo3MFU.fit <- runChangeScoreNetwork(ChangeScores_data, 'PostTo3mFU')
+PostTo3MFU.fit <- runBootstrappedChangeScoreNetwork(ChangeScores_data, 'PostTo3mFU')
 
-write_rds(x = PostTo3MFU.fit, file = here('Fitted model objects','PostTo3MFU.fit'))
+write_rds(x = PostTo3MFU.fit, file = here('Fitted model objects','PostTo3MFU.fit.boot'))
 
 
 ```
@@ -308,9 +309,9 @@ write_rds(x = PostTo3MFU.fit, file = here('Fitted model objects','PostTo3MFU.fit
 ## 3mFUTo6mFU
 
 ```{r}
-my3mTo6mFU.fit <- runChangeScoreNetwork(ChangeScores_data, '3mFUTo6mFU')
+my3mTo6mFU.fit <- runBootstrappedChangeScoreNetwork(ChangeScores_data, '3mFUTo6mFU')
 
-write_rds(x = my3mTo6mFU.fit , file = here('Fitted model objects','my3mTo6mFU.fit'))
+write_rds(x = my3mTo6mFU.fit , file = here('Fitted model objects','my3mTo6mFU.fit.boot'))
 
 
 ```
@@ -320,44 +321,18 @@ write_rds(x = my3mTo6mFU.fit , file = here('Fitted model objects','my3mTo6mFU.fi
 
 ```{r}
 
+PreToPost.fit <- runBootstrappedChangeScoreNetwork(ChangeScores_data, 'PreToPost')
 
-write_rds(x = PreToPost.fit , file = here('Fitted model objects','PreToPost.fit'))
-
-```
-
-\newpage
-
-# Error in resample -- see below
-
-Here is the first few rows of the n x p matrix
-
-```{r}
-
-head(getDataForInterval(ChangeScores_data, 'PreToPost'))
-
-```
-
-Here is the call to run the network, and then resample. Resample returns an error.
-
-```{r message=TRUE, warning=TRUE}
-
-PreToPost.fit <- runChangeScoreNetwork(ChangeScores_data, 'PreToPost')
-
-my_data <- getDataForInterval(ChangeScores_data, 'PreToPost')
-
-PreToPost.fit.boot <- resample(object = PreToPost.fit, 
-                               data = my_data, 
-                               nB = 50)
-
+write_rds(x = PreToPost.fit , file = here('Fitted model objects','PreToPost.fit.boot'))
 
 ```
 \newpage
 
 ## PreTo6mFU 
 ```{r}
-PreTo6mFU.fit <- runChangeScoreNetwork(ChangeScores_data, 'PreTo6mFU')
+PreTo6mFU.fit <- runBootstrappedChangeScoreNetwork(ChangeScores_data, 'PreTo6mFU')
 
-write_rds(x = PreTo6mFU.fit , file = here('Fitted model objects','PreTo6mFU.fit'))
+write_rds(x = PreTo6mFU.fit , file = here('Fitted model objects','PreTo6mFU.fit.boot'))
 
 
 ```
