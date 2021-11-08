@@ -72,7 +72,7 @@ get_correlations <- function(my_data){
 
 ```
 
-## fit MGM
+## fit MGM functions
 ```{r}
 
 fit_my_mgm <- function(my_data){
@@ -131,7 +131,7 @@ can loop thru models and look to see number of samples showing indirect effects 
 
 ```{r}
 
-runNetworkForOneTimepoint <- function(data_all_timepoints, timepoint){
+runNetworkForOneTimepoint <- function(data_all_timepoints, timepoint, moderated = FALSE){
   
   data <- getDataForTimepoint(data_all_timepoints, timepoint)
 
@@ -139,7 +139,9 @@ runNetworkForOneTimepoint <- function(data_all_timepoints, timepoint){
   
   #get_correlations(data)
   
-  network.fit <- fit_my_mgm(data)
+  ifelse(moderated == TRUE,
+         network.fit <- fit_my_mgm.moderated(data),
+         network.fit <- fit_my_mgm(data))
   
   return(network.fit)
   #plot_my_mgm(network.fit)
@@ -258,6 +260,19 @@ getDataForInterval <- function(ChangeScores, my_interval){
 
 ```{r}
 
+runChangeScoreNetwork <- function(ChangeScore_data, my_interval, moderated = FALSE){
+  
+  data <- getDataForInterval(ChangeScore_data, my_interval) %>%
+    as.matrix()
+  
+  ifelse(moderated == TRUE,
+         fit <- fit_my_mgm.moderated(data),
+         fit <- fit_my_mgm(data))
+  
+  return(fit)
+
+}
+
 runBootstrappedChangeScoreNetwork <- function(ChangeScore_data, my_interval, nB = 5000){
   
   data <- getDataForInterval(ChangeScore_data, my_interval) %>%
@@ -273,7 +288,7 @@ runBootstrappedChangeScoreNetwork <- function(ChangeScore_data, my_interval, nB 
 
 }
 ```
-# Change Score Network Models
+# Unmoderated Change Score Network Models
 
 ## PreToMid
 
@@ -336,6 +351,94 @@ write_rds(x = PreTo6mFU.fit , file = here('Fitted model objects','PreTo6mFU.fit.
 
 
 ```
+
+
+
+
+
+
+# Moderated Change Score Network Models
+
+
+## PreToMid
+
+```{r}
+PreToMid.moderated.fit <- runChangeScoreNetwork(ChangeScores_data, 'PreToMid', moderated = TRUE)
+
+write_rds(x = PreToMid.moderated.fit, file = here('Fitted model objects',
+                                                  'Moderated',
+                                                  'Not bootstrapped',
+                                                  'PreToMid.moderated.fit'))
+
+```
+
+## MidToPost
+
+```{r}
+MidToPost.moderated.fit <- runChangeScoreNetwork(ChangeScores_data, 'MidToPost', moderated = TRUE)
+
+write_rds(x = MidToPost.moderated.fit, file = here('Fitted model objects',
+                                                   'Moderated',
+                                                   'Not bootstrapped',
+                                                   'MidToPost.moderated.fit.boot'))
+
+
+```
+
+## PostTo3mFU
+
+```{r}
+PostTo3MFU.moderated.fit <- runChangeScoreNetwork(ChangeScores_data, 'PostTo3mFU', moderated = TRUE)
+
+write_rds(x = PostTo3MFU.moderated.fit, file = here('Fitted model objects',
+                                                    'Moderated',
+                                                    'Not bootstrapped',
+                                                    'PostTo3MFU.moderated.fit.boot'))
+
+
+```
+
+
+## 3mFUTo6mFU
+
+```{r}
+my3mTo6mFU.moderated.fit <- runChangeScoreNetwork(ChangeScores_data, '3mFUTo6mFU', moderated = TRUE)
+
+write_rds(x = my3mTo6mFU.moderated.fit , file = here('Fitted model objects',
+                                                     'Moderated',
+                                                     'Not bootstrapped',
+                                                     'my3mTo6mFU.moderated.fit.boot'))
+
+
+```
+
+
+## PreToPost 
+
+```{r}
+
+PreToPost.moderated.fit <- runChangeScoreNetwork(ChangeScores_data, 'PreToPost', moderated = TRUE)
+
+write_rds(x = PreToPost.moderated.fit , file = here('Fitted model objects',
+                                                    'Moderated',
+                                                    'Not bootstrapped',
+                                                    'PreToPost.moderated.fit.boot'))
+
+```
+\newpage
+
+## PreTo6mFU 
+```{r}
+PreTo6mFU.moderated.fit <- runChangeScoreNetwork(ChangeScores_data, 'PreTo6mFU', moderated = TRUE)
+
+write_rds(x = PreTo6mFU.moderated.fit , file = here('Fitted model objects',
+                                                    'Moderated',
+                                                    'Not bootstrapped',
+                                                    'PreTo6mFU.moderated.fit.boot'))
+
+
+```
+
 
 
 
