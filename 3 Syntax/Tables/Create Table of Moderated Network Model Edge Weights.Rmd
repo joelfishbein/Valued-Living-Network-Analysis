@@ -14,13 +14,14 @@ library(kableExtra)
 library(here)
 
 
+
+
 PreToMid.fit <- read_rds(here('Fitted model objects','Moderated','Not bootstrapped','PreToMid.moderated.fit'))
-# MidToPost.fit <- read_rds(here('Fitted model objects','MidToPost.fit'))
-# PostTo3MFU.fit <- read_rds(here('Fitted model objects','PostTo3MFU.fit'))
-# my3mTo6mFU.fit <- read_rds(here('Fitted model objects','my3mTo6mFU.fit'))
-# 
-# PreToPost.fit <- read_rds(here('Fitted model objects','PreToPost.fit'))
-# PreTo6mFU.fit <- read_rds(here('Fitted model objects','PreTo6mFU.fit'))
+MidToPost.fit <- read_rds(here('Fitted model objects','Moderated','Not bootstrapped','MidToPost.moderated.fit'))
+PostTo3MFU.fit <- read_rds(here('Fitted model objects','Moderated','Not bootstrapped','PostTo3MFU.moderated.fit'))
+my3mTo6mFU.fit <- read_rds(here('Fitted model objects','Moderated','Not bootstrapped','my3mTo6mFU.moderated.fit'))
+PreToPost.fit <- read_rds(here('Fitted model objects','Moderated','Not bootstrapped','PreToPost.moderated.fit'))
+PreTo6mFU.fit <- read_rds(here('Fitted model objects','Moderated','Not bootstrapped','PreTo6mFU.moderated.fit'))
 
 ```
 
