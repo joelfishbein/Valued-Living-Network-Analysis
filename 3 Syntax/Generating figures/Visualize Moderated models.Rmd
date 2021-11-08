@@ -1,16 +1,117 @@
 ---
 title: "Visualize Moderated Models"
-output: html_notebook
+output:
+  pdf_document: default
+  html_notebook: default
 ---
 
-
+# Read in libraries and data
 ```{r}
-plot(cars)
+
+library(tidyverse)
+library(kableExtra)
+library(here)
+library(mgm)
+library(qgraph)
+
+PreToMid.fit <- read_rds(here('Fitted model objects','Moderated','Not bootstrapped','PreToMid.moderated.fit'))
+MidToPost.fit <- read_rds(here('Fitted model objects','Moderated','Not bootstrapped','MidToPost.moderated.fit'))
+PostTo3MFU.fit <- read_rds(here('Fitted model objects','Moderated','Not bootstrapped','PostTo3MFU.moderated.fit'))
+my3mTo6mFU.fit <- read_rds(here('Fitted model objects','Moderated','Not bootstrapped','my3mTo6mFU.moderated.fit'))
+PreToPost.fit <- read_rds(here('Fitted model objects','Moderated','Not bootstrapped','PreToPost.moderated.fit'))
+PreTo6mFU.fit <- read_rds(here('Fitted model objects','Moderated','Not bootstrapped','PreTo6mFU.moderated.fit'))
+
 ```
 
-Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Cmd+Option+I*.
+# Generic plotting function
+Adapted from:
+https://jonashaslbeck.com/Groupdifferences-via-Moderation/
 
-When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Cmd+Shift+K* to preview the HTML file). 
+Changes made to accomodate just 2 groups instead of 3 in that example
 
-The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
+```{r}
 
+plotModeratedNetworkModel <- function(fit){
+  l_mgm_cond <- list()
+  for(g in 1:2) l_mgm_cond[[g]] <- condition(object = fit, 
+                                             
+                                             # g-1 since ACTorMEUC is coded as 0 = MEUC, 1 = ACT
+                                             # thus aligns with g = 1 or g = 2
+                                             values = list("1" = g-1))
+  v_max <- rep(NA, 2)
+  for(g in 1:2) v_max[g] <- max(l_mgm_cond[[g]]$pairwise$wadj)
+  
+  par(mfrow=c(1, 2))
+  for(g in 1:2) {
+    qgraph(input = l_mgm_cond[[g]]$pairwise$wadj, 
+           edge.color = l_mgm_cond[[g]]$pairwise$edgecolor_cb,
+           labels =  c( 'ACTorMEUC', 'HADS','IESR', 'FCR', 'SCS', 'EAC', 'AAQc'),
+           lty = l_mgm_cond[[g]]$pairwise$edge_lty,
+           layout = "circle", 
+           mar = c(2, 3, 5, 3),
+           maximum = max(v_max), 
+           vsize = 16, 
+           esize = 23, 
+           edge.labels  = TRUE, edge.label.cex = 3)
+    mtext(text = paste0("Group ", g), line = 2.5)
+  }
+}
+
+```
+
+\newpage
+# Pre To Mid
+```{r}
+
+plotModeratedNetworkModel(PreToMid.fit)
+
+
+```
+
+\newpage
+# Mid To Post
+```{r}
+
+plotModeratedNetworkModel(MidToPost.fit)
+
+
+```
+
+\newpage
+# Post To 3m FU
+```{r}
+
+plotModeratedNetworkModel(PostTo3MFU.fit)
+
+
+```
+
+\newpage
+# Post To 3m FU
+```{r}
+
+plotModeratedNetworkModel(my3mTo6mFU.fit)
+
+
+```
+\newpage
+# Pre to Post
+
+```{r}
+
+
+plotModeratedNetworkModel(PreToPost.fit)
+
+
+```
+
+\newpage
+# Pre to 6M FU
+
+```{r}
+
+
+plotModeratedNetworkModel(PreTo6mFU.fit)
+
+
+```
