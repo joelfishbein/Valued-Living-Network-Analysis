@@ -3,6 +3,11 @@ title: "Create Bootstrapped Network Model Table"
 output: html_notebook
 ---
 
+TODO:
+- ensure 70% is the "right" cutoff
+- do some cell highlighting per 70% cutoff
+- put in lines to separate adjacent models from longer term models
+
 # Read in libraries and data
 ```{r}
 
@@ -103,6 +108,7 @@ getEdgeEstimates <- function(object, model_name){
 # Print table 
 ```{r}
 
+to_print <- 
 bind_rows(
   getEdgeEstimates(PreToMid.fit, "1 - Pre to Mid"),
   getEdgeEstimates(MidToPost.fit, "2 - Mid to Post"),
@@ -116,22 +122,56 @@ bind_rows(
   relocate(starts_with("2 - "), .before = starts_with("3 - ")) %>%
   relocate(starts_with("3 - "), .before = starts_with("4 - ")) %>%
   relocate(starts_with("4 - "), .before = starts_with("5 - ")) %>%
-  relocate(starts_with("5 - "), .before = starts_with("6 - ")) %>%
+  relocate(starts_with("5 - "), .before = starts_with("6 - "))
   
+to_print %>%
   kable(escape = F, 
         align = "c", 
         caption = 'Bootstrapped Models', 
         digits = 2, 
         col.names = c("Variable 1", "Variable 2", rep(c("Est","5%","95%", "% Samples Where Nonzero"),times = 6))) %>%
   #kable_styling(bootstrap_options = c("striped", "hover", "condensed"), full_width = F) %>%
-  kable_classic(html_font = 'Times New Roman', full_width = FALSE) %>%
+ # kable_classic(html_font = 'Times New Roman', full_width = FALSE) %>%
+  kable_paper() %>%
   add_header_above(c(" " = 2, 
                    "Pre to Mid" = 4, 
                    "Mid to Post" = 4,
                    "Post to 3M FU" = 4,
                    "3M FU to 6M FU" = 4,
                    "Pre to Post" = 4,
-                   "Pre to 6m FU" = 4))
+                   "Pre to 6m FU" = 4)) %>%
+  # do first four columns
+  column_spec(3:6, background = ifelse(to_print$`1 - Pre to Mid % Samples Where Edge Was Nonzero` > .7, 
+                                       "red", "white"),
+              color = ifelse(to_print$`1 - Pre to Mid % Samples Where Edge Was Nonzero` > .7, 
+                                       "white", "grey")) %>%
+    # do second four columns
+  column_spec(7:10, background = ifelse(to_print$`2 - Mid to Post % Samples Where Edge Was Nonzero` > .7, 
+                                       "red", "white"),
+              color = ifelse(to_print$`2 - Mid to Post % Samples Where Edge Was Nonzero` > .7, 
+                                       "white", "grey")) %>%
+      # do third four columns
+  column_spec(11:14, background = ifelse(to_print$`3 - Post to 3M FU % Samples Where Edge Was Nonzero` > .7, 
+                                       "red", "white"),
+              color = ifelse(to_print$`3 - Post to 3M FU % Samples Where Edge Was Nonzero` > .7, 
+                                       "white", "grey")) %>%
+        # do 4th four columns
+  column_spec(15:18, background = ifelse(to_print$`4 - 3M to 6M FU % Samples Where Edge Was Nonzero` > .7, 
+                                       "red", "white"),
+              color = ifelse(to_print$`4 - 3M to 6M FU % Samples Where Edge Was Nonzero` > .7, 
+                                       "white", "grey")) %>%
+        # do 5th four columns
+  column_spec(19:22, background = ifelse(to_print$`5 - Pre to Post % Samples Where Edge Was Nonzero` > .7, 
+                                       "red", "white"),
+              color = ifelse(to_print$`5 - Pre to Post % Samples Where Edge Was Nonzero` > .7, 
+                                       "white", "grey")) %>%
+          # do 6th four columns
+  column_spec(23:26, background = ifelse(to_print$`6 - Pre to 6M FU % Samples Where Edge Was Nonzero` > .7, 
+                                       "red", "white"),
+              color = ifelse(to_print$`6 - Pre to 6M FU % Samples Where Edge Was Nonzero` > .7, 
+                                       "white", "grey"))
+  
+                                       
 
 ```
 
