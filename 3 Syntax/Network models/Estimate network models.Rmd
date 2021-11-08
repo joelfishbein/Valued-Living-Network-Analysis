@@ -380,7 +380,7 @@ MidToPost.moderated.fit <- runChangeScoreNetwork(ChangeScores_data, 'MidToPost',
 write_rds(x = MidToPost.moderated.fit, file = here('Fitted model objects',
                                                    'Moderated',
                                                    'Not bootstrapped',
-                                                   'MidToPost.moderated.fit.boot'))
+                                                   'MidToPost.moderated.fit'))
 
 
 ```
@@ -393,7 +393,7 @@ PostTo3MFU.moderated.fit <- runChangeScoreNetwork(ChangeScores_data, 'PostTo3mFU
 write_rds(x = PostTo3MFU.moderated.fit, file = here('Fitted model objects',
                                                     'Moderated',
                                                     'Not bootstrapped',
-                                                    'PostTo3MFU.moderated.fit.boot'))
+                                                    'PostTo3MFU.moderated.fit'))
 
 
 ```
@@ -407,7 +407,7 @@ my3mTo6mFU.moderated.fit <- runChangeScoreNetwork(ChangeScores_data, '3mFUTo6mFU
 write_rds(x = my3mTo6mFU.moderated.fit , file = here('Fitted model objects',
                                                      'Moderated',
                                                      'Not bootstrapped',
-                                                     'my3mTo6mFU.moderated.fit.boot'))
+                                                     'my3mTo6mFU.moderated.fit'))
 
 
 ```
@@ -422,7 +422,7 @@ PreToPost.moderated.fit <- runChangeScoreNetwork(ChangeScores_data, 'PreToPost',
 write_rds(x = PreToPost.moderated.fit , file = here('Fitted model objects',
                                                     'Moderated',
                                                     'Not bootstrapped',
-                                                    'PreToPost.moderated.fit.boot'))
+                                                    'PreToPost.moderated.fit'))
 
 ```
 \newpage
@@ -434,7 +434,7 @@ PreTo6mFU.moderated.fit <- runChangeScoreNetwork(ChangeScores_data, 'PreTo6mFU',
 write_rds(x = PreTo6mFU.moderated.fit , file = here('Fitted model objects',
                                                     'Moderated',
                                                     'Not bootstrapped',
-                                                    'PreTo6mFU.moderated.fit.boot'))
+                                                    'PreTo6mFU.moderated.fit'))
 
 
 ```
