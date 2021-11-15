@@ -1,0 +1,22 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+# Read in data
+
+```{r}
+library(tidyverse)
+library(here)
+library(qgraph)
+
+# Single timepoint models
+Pre.fit <- read_rds(here('Fitted model objects','Pre.fit'))
+Mid.fit <- read_rds(here('Fitted model objects','Mid.fit'))
+Post.fit <- read_rds(here('Fitted model objects','Post.fit'))
+my3mFU.fit <- read_rds(here('Fitted model objects','my3mFU.fit'))
+my6mFU.fit <- read_rds(here('Fitted model objects','my6mFU.fit'))
+
+```
+
+
