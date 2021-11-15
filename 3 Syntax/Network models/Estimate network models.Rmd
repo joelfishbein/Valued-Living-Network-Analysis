@@ -38,39 +38,8 @@ library(here)
 data_all_timepoints <- read_rds(file = here('4 Generated Datasets','Vars_At_All_Timepoints.rds'))
 ```
 
-# Single timepoint models - Generic functions
+# Generic model functions
 
-## extract data for one timepoint
-
-```{r}
-
-getDataForTimepoint <- function(data_all_timepoints, my_timepoint){
-  data_to_return <- data_all_timepoints %>% filter(timepoint == my_timepoint) %>%
-    select(-timepoint, -ID, -CESD) %>%
-    
-  # drop full rows with any missing observations
-    drop_na()
-  }
-
-```
-
-
-## Examine bivariates
-
-corrr package used for easy computation and display of the correlation matrix
-
-```{r}
-
-get_correlations <- function(my_data){
-  my_data %>%
-  select(-Condition_Dummy) %>%
-  corrr::correlate() %>%
-  corrr::rearrange() %>%
-  corrr::shave() %>%
-  corrr::fashion()
-}
-
-```
 
 ## fit MGM functions
 ```{r}
@@ -122,6 +91,24 @@ fit_my_mgm.moderated <- function(my_data){
 
 ```
 
+# Single timepoint models - Generic functions
+
+## extract data for one timepoint
+
+```{r}
+
+getDataForTimepoint <- function(data_all_timepoints, my_timepoint){
+  data_to_return <- data_all_timepoints %>% filter(timepoint == my_timepoint) %>%
+    select(-timepoint, -ID, -CESD) %>%
+    
+  # drop full rows with any missing observations
+    drop_na()
+  }
+
+```
+
+
+
 
 bootstrap with resample() - 1000 replicants is sufficient, maybe 10K
 can loop thru models and look to see number of samples showing indirect effects of interest
@@ -149,9 +136,9 @@ runNetworkForOneTimepoint <- function(data_all_timepoints, timepoint, moderated 
 }
 ```
 
-# Estimate networks at one timepoint
+## Estimate networks at one timepoint
 
-## Pre
+### Pre
 
 This model has to be specified differently than the rest because we don't want condition modeled
 
@@ -182,7 +169,7 @@ Pre.fit <- mgm::mgm(data = Pre.data,
 ```
 
 
-## Mid, Post, 3mFU, 6mFU
+### Mid, Post, 3mFU, 6mFU
 ```{r}
 
 Mid.fit <- runNetworkForOneTimepoint(data_all_timepoints, 2)
@@ -195,7 +182,7 @@ my6mFU.fit <- runNetworkForOneTimepoint(data_all_timepoints, 5)
 
 ```
 
-## Save model fits
+### Save model fits
 
 ```{r}
 
@@ -292,10 +279,19 @@ runBootstrappedChangeScoreNetwork <- function(ChangeScore_data, my_interval, nB 
 
 ## PreToMid
 
-```{r}
-PreToMid.fit <- runBootstrappedChangeScoreNetwork(ChangeScores_data, 'PreToMid')
 
-write_rds(x = PreToMid.fit, file = here('Fitted model objects','PreToMid.fit.boot'))
+```{r}
+
+PreToMid.fit <- runChangeScoreNetwork(ChangeScores_data, 'PreToMid')
+
+write_rds(x = PreToMid.fit, file = here('Fitted model objects',
+                                         'Nonmoderated',
+                                        'Nonbootstrapped',
+                                        'PreToMid.fit'))
+
+PreToMid.fit.boot <- runBootstrappedChangeScoreNetwork(ChangeScores_data, 'PreToMid')
+
+write_rds(x = PreToMid.fit.boot, file = here('Fitted model objects','PreToMid.fit.boot'))
 
 
 ```
@@ -303,7 +299,16 @@ write_rds(x = PreToMid.fit, file = here('Fitted model objects','PreToMid.fit.boo
 ## MidToPost
 
 ```{r}
-MidToPost.fit <- runBootstrappedChangeScoreNetwork(ChangeScores_data, 'MidToPost')
+
+MidToPost.fit <- runChangeScoreNetwork(ChangeScores_data, 'MidToPost')
+
+write_rds(x = MidToPost.fit, file = here('Fitted model objects',
+                                         'Nonmoderated',
+                                        'Nonbootstrapped',
+                                        'MidToPost.fit'))
+
+
+MidToPost.fit.boot <- runBootstrappedChangeScoreNetwork(ChangeScores_data, 'MidToPost')
 
 write_rds(x = MidToPost.fit, file = here('Fitted model objects','MidToPost.fit.boot'))
 
@@ -313,7 +318,16 @@ write_rds(x = MidToPost.fit, file = here('Fitted model objects','MidToPost.fit.b
 ## PostTo3mFU
 
 ```{r}
-PostTo3MFU.fit <- runBootstrappedChangeScoreNetwork(ChangeScores_data, 'PostTo3mFU')
+
+PostTo3MFU.fit <- runChangeScoreNetwork(ChangeScores_data, 'PostTo3mFU')
+
+write_rds(x = PostTo3MFU.fit, file = here('Fitted model objects',
+                                         'Nonmoderated',
+                                        'Nonbootstrapped',
+                                        'PostTo3MFU.fit'))
+
+
+PostTo3MFU.fit.boot <- runBootstrappedChangeScoreNetwork(ChangeScores_data, 'PostTo3mFU')
 
 write_rds(x = PostTo3MFU.fit, file = here('Fitted model objects','PostTo3MFU.fit.boot'))
 
@@ -324,7 +338,15 @@ write_rds(x = PostTo3MFU.fit, file = here('Fitted model objects','PostTo3MFU.fit
 ## 3mFUTo6mFU
 
 ```{r}
-my3mTo6mFU.fit <- runBootstrappedChangeScoreNetwork(ChangeScores_data, '3mFUTo6mFU')
+my3mTo6mFU.fit <- runChangeScoreNetwork(ChangeScores_data, '3mFUTo6mFU')
+
+write_rds(x = my3mTo6mFU.fit, file = here('Fitted model objects',
+                                         'Nonmoderated',
+                                        'Nonbootstrapped',
+                                        'my3mTo6mFU.fit'))
+
+
+my3mTo6mFU.fit.boot <- runBootstrappedChangeScoreNetwork(ChangeScores_data, '3mFUTo6mFU')
 
 write_rds(x = my3mTo6mFU.fit , file = here('Fitted model objects','my3mTo6mFU.fit.boot'))
 
@@ -336,18 +358,18 @@ write_rds(x = my3mTo6mFU.fit , file = here('Fitted model objects','my3mTo6mFU.fi
 
 ```{r}
 
-PreToPost.fit <- runBootstrappedChangeScoreNetwork(ChangeScores_data, 'PreToPost')
-
-write_rds(x = PreToPost.fit , file = here('Fitted model objects','PreToPost.fit.boot'))
+# PreToPost.fit <- runBootstrappedChangeScoreNetwork(ChangeScores_data, 'PreToPost')
+# 
+# write_rds(x = PreToPost.fit , file = here('Fitted model objects','PreToPost.fit.boot'))
 
 ```
 \newpage
 
 ## PreTo6mFU 
 ```{r}
-PreTo6mFU.fit <- runBootstrappedChangeScoreNetwork(ChangeScores_data, 'PreTo6mFU')
-
-write_rds(x = PreTo6mFU.fit , file = here('Fitted model objects','PreTo6mFU.fit.boot'))
+# PreTo6mFU.fit <- runBootstrappedChangeScoreNetwork(ChangeScores_data, 'PreTo6mFU')
+# 
+# write_rds(x = PreTo6mFU.fit , file = here('Fitted model objects','PreTo6mFU.fit.boot'))
 
 
 ```
