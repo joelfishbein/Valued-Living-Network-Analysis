@@ -36,6 +36,8 @@ library(here)
 ```{r}
 
 data_all_timepoints <- read_rds(file = here('4 Generated Datasets','Vars_At_All_Timepoints.rds'))
+
+table(data_all_timepoints$Condition_Dummy)
 ```
 
 # Generic model functions
@@ -57,6 +59,9 @@ fit_my_mgm <- function(my_data){
                       type = c("c","g","g","g","g","g","g"), 
                       
                       k =2,
+                      
+                      # ~~ test code to see if we can get signs for tx effect ~~
+                      binarySign = TRUE,
                       
                       # per Jonas set this way
                       ruleReg = "OR")
@@ -243,7 +248,7 @@ getDataForInterval <- function(ChangeScores, my_interval){
 
 ```
 
-## Wrapper
+## Wrappers
 
 ```{r}
 
@@ -358,10 +363,21 @@ write_rds(x = my3mTo6mFU.fit , file = here('Fitted model objects','my3mTo6mFU.fi
 
 ```{r}
 
-# PreToPost.fit <- runBootstrappedChangeScoreNetwork(ChangeScores_data, 'PreToPost')
-# 
-# write_rds(x = PreToPost.fit , file = here('Fitted model objects','PreToPost.fit.boot'))
+PreToPost.fit <- runChangeScoreNetwork(ChangeScores_data, 'PreToPost')
 
+write_rds(x = PreToPost.fit, file = here('Fitted model objects',
+                                         'Nonmoderated',
+                                        'Nonbootstrapped',
+                                        'PreToPost.fit'))
+
+PreToPost.fit.boot <- runBootstrappedChangeScoreNetwork(ChangeScores_data, 'PreToPost')
+
+write_rds(x = PreToPost.fit.boot, file = here('Fitted model objects','PreToMid.fit.boot'))
+
+PreToPost.fit.boot <- read_rds(file = here('Fitted model objects','PreToMid.fit.boot'))
+mgm::plotRes(PreToPost.fit.boot, labels = c('TX','HADS','IESR','FCR','SCS','EAC','AAQc'))
+
+PreToPost.fit$interactions
 ```
 \newpage
 
