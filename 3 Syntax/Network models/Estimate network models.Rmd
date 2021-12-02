@@ -37,7 +37,6 @@ library(here)
 
 data_all_timepoints <- read_rds(file = here('4 Generated Datasets','Vars_At_All_Timepoints.rds'))
 
-table(data_all_timepoints$Condition_Dummy)
 ```
 
 # Generic model functions
@@ -93,113 +92,6 @@ fit_my_mgm.moderated <- function(my_data){
   return(fit_mgm)
   
 }
-
-```
-
-# Single timepoint models - Generic functions
-
-## extract data for one timepoint
-
-```{r}
-
-getDataForTimepoint <- function(data_all_timepoints, my_timepoint){
-  data_to_return <- data_all_timepoints %>% filter(timepoint == my_timepoint) %>%
-    select(-timepoint, -ID, -CESD) %>%
-    
-  # drop full rows with any missing observations
-    drop_na()
-  }
-
-```
-
-
-
-
-bootstrap with resample() - 1000 replicants is sufficient, maybe 10K
-can loop thru models and look to see number of samples showing indirect effects of interest
-
-
-## Wrapper to call everything
-
-```{r}
-
-runNetworkForOneTimepoint <- function(data_all_timepoints, timepoint, moderated = FALSE){
-  
-  data <- getDataForTimepoint(data_all_timepoints, timepoint)
-
-  #psych::describe(data)
-  
-  #get_correlations(data)
-  
-  ifelse(moderated == TRUE,
-         network.fit <- fit_my_mgm.moderated(data),
-         network.fit <- fit_my_mgm(data))
-  
-  return(network.fit)
-  #plot_my_mgm(network.fit)
-
-}
-```
-
-## Estimate networks at one timepoint
-
-### Pre
-
-This model has to be specified differently than the rest because we don't want condition modeled
-
-```{r}
-
-Pre.data <- getDataForTimepoint(data_all_timepoints, 1) %>%
-  select(-Condition_Dummy)
-
-#psych::describe(Pre.data)
-  
-set.seed(08132021)
-
-Pre.fit <- mgm::mgm(data = Pre.data, 
-         
-         # tells model that all variables are continuous
-         level = c(1,1,1,1,1,1,1), 
-         
-         # tells model that all variables have assumed Gaussian normal distribution
-         type = c("g","g","g","g","g","g","g"), 
-         
-         k =2,
-         
-         # per Jonas set this way
-         ruleReg = "OR")
-
-     
-
-```
-
-
-### Mid, Post, 3mFU, 6mFU
-```{r}
-
-Mid.fit <- runNetworkForOneTimepoint(data_all_timepoints, 2)
-
-Post.fit <- runNetworkForOneTimepoint(data_all_timepoints, 3)
-
-my3mFU.fit <- runNetworkForOneTimepoint(data_all_timepoints, 4)
-
-my6mFU.fit <- runNetworkForOneTimepoint(data_all_timepoints, 5)
-
-```
-
-### Save model fits
-
-```{r}
-
-write_rds(x = Pre.fit , file = here('Fitted model objects','Pre.fit'))
-
-write_rds(x = Mid.fit , file = here('Fitted model objects','Mid.fit'))
-
-write_rds(x = Post.fit , file = here('Fitted model objects','Post.fit'))
-
-write_rds(x = my3mFU.fit , file = here('Fitted model objects','my3mFU.fit'))
-
-write_rds(x = my6mFU.fit , file = here('Fitted model objects','my6mFU.fit'))
 
 ```
 
@@ -366,6 +258,17 @@ write_rds(x = my3mTo6mFU.fit , file = here('Fitted model objects','my3mTo6mFU.fi
 PreToPost.fit <- runChangeScoreNetwork(ChangeScores_data, 'PreToPost')
 
 write_rds(x = PreToPost.fit, file = here('Fitted model objects',
+                                         'Nonmoderated',
+                                        'Nonbootstrapped',
+                                        'PreToPost.fit_fix_binary_problem'))
+
+
+new <- read_rds(file = here('Fitted model objects',
+                                         'Nonmoderated',
+                                        'Nonbootstrapped',
+                                        'PreToPost.fit_fix_binary_problem'))
+
+old <- read_rds(file = here('Fitted model objects',
                                          'Nonmoderated',
                                         'Nonbootstrapped',
                                         'PreToPost.fit'))
