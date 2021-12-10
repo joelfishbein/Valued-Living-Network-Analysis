@@ -1,0 +1,266 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+Per Joanna, as a sanity check that results of full network models make sense, replicate some of the causal steps mediation models as network models...
+
+```{r}
+
+knitr::opts_chunk$set(error = TRUE)
+
+library(tidyverse)
+library(mgm)
+library(qgraph)
+library(psych)
+library(corrr)
+library(here)
+
+``` 
+
+```{r}
+
+data_all_timepoints <- read_rds(file = here('4 Generated Datasets','Vars_At_All_Timepoints.rds'))
+
+```
+
+# Generic model functions
+
+## fit MGM functions
+```{r}
+
+fit_my_mgm <- function(my_data){
+  
+  set.seed(08132021)
+  fit_mgm <- mgm::mgm(data = my_data, 
+                      
+                      # first variable (condition) has 2 conditions, all others are continuous
+                      level = c(2,1,1), 
+                      
+                      # first variable (condition) is categorical, all others 
+                      # have assumed Gaussian normal ('g') distributions
+                      type = c("c","g","g"), 
+                      
+                      k =2,
+                      
+                      # ~~ test code to see if we can get signs for tx effect ~~
+                      binarySign = TRUE,
+                      
+                      # per Jonas set this way
+                      ruleReg = "OR")
+  
+  return(fit_mgm)
+  
+}
+
+```
+
+## generic function to plot MGM
+```{r}
+
+plot_my_mgm <- function(my_mgm_fit, my_labels){
+  
+  my_edgeweights <- my_mgm_fit$pairwise$wadj
+  
+  my_colorblind_edge_colors <- my_mgm_fit$pairwise$edgecolor_cb
+  
+  qgraph(my_edgeweights, 
+         layout = 'circle',
+         repulsion = 1.3,
+         edge.labels = TRUE,
+         edge.color = my_colorblind_edge_colors, 
+         legend.cex=.4, 
+         vsize = 3.5, esize = 15, labels = my_labels)
+}
+  
+```
+
+# Change score models - setup and generic functions
+
+## Create dataset of change scores
+
+```{r}
+
+ChangeScores_data <- data_all_timepoints %>%
+  
+  pivot_longer(cols = HADS.A:AAQc, names_to = 'instrument') %>%
+  pivot_wider(id_cols = c('ID','instrument','timepoint', 'Condition_Dummy'),
+              names_from = 'timepoint',
+              values_from = 'value') %>%
+  mutate(PreToMid = (`2` - `1`),
+         MidToPost = (`3` - `2`),
+         PostTo3mFU = (`4` - `3`),
+         `3mFUTo6mFU` = (`5` - `4`),
+         PreToPost = (`3` - `1`),
+         PreTo6mFU = (`5` - `1`)) %>%
+  # drop scores at each timepoint since change scores have now been computed
+  dplyr::select(-`1`, -`2`, -`3`, -`4`, -`5`) %>%
+  
+  # tidy
+  pivot_longer(cols = PreToMid:PreTo6mFU, names_to = 'ChangeScore') %>%
+  
+  # pivot to long by interval, by participant, wide by instrument
+  # consistent with format we will want to estimate networks
+  pivot_wider(names_from = instrument) %>%
+  filter(ChangeScore == 'PreToPost') 
+
+```
+
+## Extract data for one interval
+
+```{r}
+
+getDataForInterval <- function(ChangeScores, mediator_var, outcome_var){
+  data_to_return <- ChangeScores %>% 
+    select(Condition_Dummy, mediator_var, outcome_var) %>%
+    filter('PreToPost') %>%
+    
+  # drop full rows with any missing observations
+    drop_na()
+  
+  return(data_to_return)
+}
+
+```
+
+
+# Run models
+
+## SCS
+
+### SCS - IESR
+
+```{r}
+
+SCS.IESR.data <- ChangeScores_data %>%
+  select(Condition_Dummy, SCS, IESR.Total) %>%
+  drop_na()
+
+
+SCS.IESR.fit <- fit_my_mgm(SCS.IESR.data )
+
+plot_my_mgm(SCS.IESR.fit, my_labels = c("TX","SCS","IESR"))
+
+
+```
+
+### SCS - HADS
+
+```{r}
+
+ChangeScores_data %>%
+  select(Condition_Dummy, SCS, HADS.A) %>%
+  drop_na() %>%
+  fit_my_mgm(.) %>%
+  plot_my_mgm(., my_labels = c("TX","SCS","HADS"))
+
+
+```
+
+
+### SCS - HADS
+
+```{r}
+
+ChangeScores_data %>%
+  select(Condition_Dummy, SCS, FCR) %>%
+  drop_na() %>%
+  fit_my_mgm(.) %>%
+  plot_my_mgm(., my_labels = c("TX","SCS","HADS"))
+
+
+```
+
+
+## AAQc
+
+### AAQc - IESR
+
+```{r}
+
+AAQc.IESR.data <- ChangeScores_data %>%
+  select(Condition_Dummy, AAQc, IESR.Total) %>%
+  drop_na()
+
+
+AAQc.IESR.fit <- fit_my_mgm(AAQc.IESR.data )
+
+plot_my_mgm(AAQc.IESR.fit, my_labels = c("TX","AAQc","IESR"))
+
+
+```
+
+### AAQc - HADS
+
+```{r}
+
+ChangeScores_data %>%
+  select(Condition_Dummy, AAQc, HADS.A) %>%
+  drop_na() %>%
+  fit_my_mgm(.) %>%
+  plot_my_mgm(., my_labels = c("TX","AAQc","HADS"))
+
+
+```
+
+
+### AAQc - HADS
+
+```{r}
+
+ChangeScores_data %>%
+  select(Condition_Dummy, AAQc, FCR) %>%
+  drop_na() %>%
+  fit_my_mgm(.) %>%
+  plot_my_mgm(., my_labels = c("TX","AAQc","HADS"))
+
+
+```
+
+
+
+
+## EAC.Total
+
+### EAC.Total - IESR
+
+```{r}
+
+EAC.Total.IESR.data <- ChangeScores_data %>%
+  select(Condition_Dummy, EAC.Total, IESR.Total) %>%
+  drop_na()
+
+
+EAC.Total.IESR.fit <- fit_my_mgm(EAC.Total.IESR.data )
+
+plot_my_mgm(EAC.Total.IESR.fit, my_labels = c("TX","EAC.Total","IESR"))
+
+
+```
+
+### EAC.Total - HADS
+
+```{r}
+
+ChangeScores_data %>%
+  select(Condition_Dummy, EAC.Total, HADS.A) %>%
+  drop_na() %>%
+  fit_my_mgm(.) %>%
+  plot_my_mgm(., my_labels = c("TX","EAC.Total","HADS"))
+
+
+```
+
+
+### EAC.Total - HADS
+
+```{r}
+
+ChangeScores_data %>%
+  select(Condition_Dummy, EAC.Total, FCR) %>%
+  drop_na() %>%
+  fit_my_mgm(.) %>%
+  plot_my_mgm(., my_labels = c("TX","EAC.Total","HADS"))
+
+
+```
