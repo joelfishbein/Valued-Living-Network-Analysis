@@ -1,0 +1,232 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+# Read data
+
+```{r}
+library(tidyverse)
+library(kableExtra)
+library(here)
+
+PreToPost.fit.no_boot <- read_rds(here('Fitted model objects','Nonmoderated','Nonbootstrapped','PreToPost.fit'))
+
+PreToPost.fit.boot <- read_rds(here('Fitted model objects','PreToPost.fit.boot'))
+
+```
+
+
+# Set names of rows and columns
+
+The network model itself does not store the names of the nodes, so input them here manually. Must match the order in which they were entered into the network.
+
+```{r}
+
+var_names <- tibble(names = c('ACTorMEUC','HADS','IESR','FCR','SCS','EAC','AAQc'))
+```
+
+# Generic function to create tidy adjacency matrix
+
+```{r}
+
+
+getTidyAdjacencyMatrix <- function(mgm_fit){
+  
+  # signs has 0s (undefined values) and NAs (non-sig edge values)
+  # in it. We will just replace those with 1s for now.
+  signs.tibble <- mgm_fit$pairwise$signs %>% 
+    as_tibble() %>%
+    mutate(across(everything(), ~replace(.x, .x %in% c(NA,0), 1)))
+  
+  adjacency.tibble <- mgm_fit$pairwise$wadj %>%
+    as_tibble()
+  
+  # adjacency 
+  adjacency_with_signs.tibble <- (signs.tibble * adjacency.tibble)
+  
+  
+  adjacency.long <- 
+    adjacency_with_signs.tibble %>%
+    
+    # rename columns as variable names
+    rename_all(~var_names %>% pull(names)) %>%
+    
+    # add row names as variable names again
+    mutate(`Variable 1` = var_names$names) %>%
+    
+    # format as long by variable 1 and variable 2
+    pivot_longer(cols = ACTorMEUC:AAQc, names_to = 'Variable 2') %>%
+    mutate(value = round(value,2)) %>%
+    
+    # remove redundant entries
+    
+   mutate(Var = map2_chr(`Variable 1`, `Variable 2`, ~toString(sort(c(.x, .y))))) %>%
+  distinct(Var, .keep_all = TRUE) %>%
+  select(-Var)
+  
+  return(adjacency.long)
+  
+}
+
+
+```
+
+# Function for obtaining estimates and quantiles
+
+Uses part of https://github.com/cran/mgm/blob/master/R/plotRes.R
+```{r}
+
+
+getBootEstimates <- function(object){
+  
+  # the following is copied from Jonas's code
+  
+  quantiles <- c(.05, .95)
+  
+  dims <- dim(object$bootParameters)
+    p <- dims[1]
+    nB <- dims[3]
+    n_pars <- p*(p-1) / 2
+    
+    # Collapse into edge x property matrix
+    tar_mat <- matrix(NA, nrow=n_pars, ncol = 6)
+    colnames(tar_mat) <- c("Variable A", "Variable B", "Mean", "qtl_low", "qtl_high", "propLtZ")
+    
+    counter <- 1
+    for(row in 1:p) {
+      for(col in row:p) {
+        if(row!=col){
+          
+          # Variable ids
+          tar_mat[counter, 1] <- row
+          tar_mat[counter, 2] <- col
+          
+          # Quantiles
+          qtls <- quantile(object$bootParameters[row, col, ], probs = quantiles)
+          tar_mat[counter, 3] <- mean(object$bootParameters[row, col, ])
+          tar_mat[counter, 4] <- qtls[1]
+          tar_mat[counter, 5] <- qtls[2]
+          tar_mat[counter, 6] <- mean(abs(object$bootParameters[row, col, ]) > 0) # proportion estimates > 0
+          
+          # update counter
+          counter <- counter + 1
+        }
+      }
+    }
+    
+    # now that the matrix is completed, new code to turn it into a tibble with my variable names embedded
+    
+    variable_names <- tibble(numbers = as.double(c(1:7)),
+                             names = c( 'ACTorMEUC', 'HADS','IESR', 'FCR', 'SCS', 'EAC', 'AAQc'))
+    
+    EdgeWeights <-
+      tar_mat %>%
+      as_tibble %>%
+      
+      # pull in variable names for each variable column
+      left_join(variable_names, by = c ("Variable A" = "numbers")) %>%
+      select(-`Variable A`) %>%
+      rename(`Variable 1` = names) %>%
+      left_join(variable_names, by = c ("Variable B" = "numbers")) %>%
+      select(-`Variable B`) %>%
+      rename(`Variable 2` = names) %>%
+      
+      # rearrange column order
+      relocate(`Variable 2`, .before = Mean) %>%
+      relocate(`Variable 1`, .before = `Variable 2`) %>%
+      
+      # rename columns
+      rename(`Mean Boot Estimate of Edge Weight` = Mean,
+            `Boot 5%` = qtl_low,
+             `Boot 95%` = qtl_high,
+             `% Boot Samples Where Edge Was Nonzero` = propLtZ)
+    
+    return(EdgeWeights)
+    
+}
+
+```
+
+
+# Get "type" of association
+
+```{r}
+process_vars <- c("AAQc","EAC","SCS")
+outcome_vars <- c("IESR","HADS","FCR")
+
+getEdgeType <- function(var_name_1, var_name_2){
+  
+  case_when(
+    
+    
+    
+    # handle intervention effects
+    var_name_1 %in% c("ACTorMEUC"), 
+     return('Intervention Effect'),
+    
+    # handle process variable associations
+    if_else(var_name_1 %in% process_vars && var_name_2 %in% process_vars,
+           return('Process Variable Association'),
+           
+           # handle outcome variable associations
+           if_else(var_name_1 %in% outcome_vars && var_name_2 %in% outcome_vars,
+                  return('Outcome Variable Association'),
+                  
+                  # only remaining option is process-outcome association
+                  return('Process-Outcome Association')
+           )
+    )
+  )
+  
+  
+}
+
+```
+
+
+# Obtain estimates from non-boot model
+```{r}
+
+adjacency.no_boot <- getTidyAdjacencyMatrix(PreToPost.fit.no_boot)
+
+```
+
+# Obtain stabilities from boot model
+
+```{r}
+
+estimates.boot <- getBootEstimates(PreToPost.fit.boot)
+
+```
+
+# Combine
+
+```{r}
+
+process_vars <- c("AAQc","EAC","SCS")
+outcome_vars <- c("IESR","HADS","FCR")
+
+PreToPost.table <- left_join(adjacency.no_boot, estimates.boot, by = c('Variable 1', 'Variable 2')) %>%
+  # drop rows that are association of variable with itself
+  filter(!is.na(`Mean Boot Estimate of Edge Weight`)) %>%
+  rowwise() %>%
+  
+  # setup type variable using case_when
+  mutate(Type = case_when(
+         
+         `Variable 1` == "ACTorMEUC" ~ "Intervention Effect",
+         `Variable 1` %in% process_vars & `Variable 2` %in% process_vars ~ "Process Variable Associations",
+         `Variable 1` %in% outcome_vars & `Variable 2` %in% outcome_vars ~ "Outcome Variable Associations",
+         TRUE ~ "Process-Outcome Associations")) %>%
+         
+         
+        
+  relocate(Type)
+
+
+  
+
+PreToPost.table
+```
