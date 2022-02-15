@@ -1,0 +1,238 @@
+---
+title: "Compute omega total reliability"
+output: html_notebook
+---
+
+# Read in the data and libraries
+
+```{r}
+
+library(tidyverse)
+library(here)
+library(lavaan)
+library(semTools)
+
+``` 
+
+# Identify participants with complete data at Pre and Post for our variables in the network
+
+```{r}
+
+complete_data <- read_rds(file = here('4 Generated Datasets','Vars_At_All_Timepoints.rds')) %>%
+  select(-CESD) %>%
+  pivot_longer(cols = HADS.A:AAQc) %>%
+  filter(timepoint %in% c("1","3")) %>%
+  pivot_wider(names_from = timepoint:name) %>%
+  filter(complete.cases(across(everything())))
+  
+  
+network_analysis_IDs <- complete_data %>% pull(ID)
+
+
+```
+
+# Read in item level data 
+
+```{r}
+
+itemsDB <- read_csv('~/On HD/Raw data/Valued Living Study/RCT_Qualtrics_Unabridged_6.8.21.csv', na = "#NULL!") %>%
+  filter(ID %in% network_analysis_IDs)
+
+```
+
+
+# Compute omega total
+
+The procedure here of calling lavaan first with the defaults as used here, and them semTools to obtain reliability estimates, is described in https://doi-org.colorado.idm.oclc.org/10.1177%2F2515245920951747
+
+## CARS
+
+omega  0.8514432
+
+```{r}
+
+CARS.model <-
+  'factor =~ Recur_Q1_T1 + 
+  Recur_Q2_T1 + 
+  Recur_Q3_T1 + 
+  Recur_Q4_T1'
+
+CARS.fit <- lavaan::cfa(CARS.model, 
+                        data=itemsDB, 
+                        std.lv=T, 
+                        missing='direct', 
+                        estimator='MLR')
+
+
+semTools::reliability(CARS.fit)
+  
+
+```
+
+
+## EAC
+
+omega  0.9126759
+
+HEADS UP: Question 1 on EAC is the instructions, so you have to include Question 9.
+
+```{r}
+
+EAC.model <-
+  'factor =~ EAC_Q9_T1 + EAC_Q2_T1 +
+         EAC_Q3_T1 + EAC_Q4_T1 +
+         EAC_Q5_T1 + EAC_Q6_T1 +
+         EAC_Q7_T1 + EAC_Q8_T1'
+
+EAC.fit <- lavaan::cfa(EAC.model, 
+                        data=itemsDB, 
+                        std.lv=T, 
+                        missing='direct', 
+                        estimator='MLR')
+
+semTools::reliability(EAC.fit)
+
+```
+
+
+## AAQc
+omega  0.8327712
+
+```{r}
+
+AAQc.model <-
+  'factor =~ AAQ_Q1_T1 +
+  AAQ_Q2_T1 +
+  AAQ_Q3_T1 +
+  AAQ_Q4_T1 +
+  AAQ_Q5_T1 +
+  AAQ_Q6_T1 +
+  AAQ_Q7_T1 +
+  AAQ_Q8_T1 +
+  AAQ_Q9_T1 +
+  AAQ_Q10_T1 +
+  AAQ_Q11_T1 +
+  AAQ_Q12_T1 +
+  AAQ_Q13_T1 +
+  AAQ_Q14_T1 +
+  AAQ_Q15_T1'
+
+
+AAQc.fit <- lavaan::cfa(AAQc.model, 
+                        data=itemsDB, 
+                        std.lv=T, 
+                        missing='direct', 
+                        estimator='MLR')
+
+semTools::reliability(AAQc.fit)
+```
+
+
+## HADS-A
+
+HEADS UP: Question 1 on EAC is the instructions, so you have to include Question 8.
+
+omega  0.8215879
+```{r}
+
+HADSA.model <-
+  'factor =~ HADS_Q2_T1 +
+  HADS_Q3_T1 +
+  HADS_Q4_T1 +
+  HADS_Q5_T1 +
+  HADS_Q6_T1 +
+  HADS_Q7_T1 +
+  HADS_Q8_T1'
+
+
+
+HADSA.fit <- lavaan::cfa(HADSA.model, 
+                        data=itemsDB, 
+                        std.lv=T, 
+                        missing='direct', 
+                        estimator='MLR')
+
+semTools::reliability(HADSA.fit)
+```
+
+
+
+
+
+## Self Compassion
+
+omega  0.8711170
+
+```{r}
+
+SelfCompassion.model <-
+  'factor =~ SCSSF_Q1_T1R +
+  SCSSF_Q2_T1 +
+  SCSSF_Q3_T1 +
+  SCSSF_Q4_T1R +
+  SCSSF_Q5_T1 +
+  SCSSF_Q6_T1 +
+  SCSSF_Q7_T1 +
+  SCSSF_Q8_T1R +
+  SCSSF_Q9_T1R +
+  SCSSF_Q10_T1 +
+  SCSSF_Q11_T1R +
+  SCSSF_Q12_T1R'
+
+
+
+
+SelfCompassion.fit <- lavaan::cfa(SelfCompassion.model, 
+                        data=itemsDB, 
+                        std.lv=T, 
+                        missing='direct', 
+                        estimator='MLR')
+
+semTools::reliability(SelfCompassion.fit)
+```
+
+
+
+
+## IES Total
+
+omega  0.8534838
+
+```{r}
+
+IESR.model <-
+  'factor =~ IES_Q1_T1 +
+  IES_Q2_T1 +
+  IES_Q3_T1 +
+  IES_Q4_T1 +
+  IES_Q5_T1 +
+  IES_Q6_T1 +
+  IES_Q7_T1 +
+  IES_Q8_T1 +
+  IES_Q9_T1 +
+  IES_Q10_T1 +
+  IES_Q11_T1 +
+  IES_Q12_T1 +
+  IES_Q13_T1 +
+  IES_Q14_T1 +
+  IES_Q15_T1 +
+  IES_Q16_T1 +
+  IES_Q17_T1 +
+  IES_Q18_T1 +
+  IES_Q19_T1 +
+  IES_Q20_T1 +
+  IES_Q21_T1 +
+  IES_Q22_T1'
+
+
+
+
+IESR.fit <- lavaan::cfa(IESR.model, 
+                        data=itemsDB, 
+                        std.lv=T, 
+                        missing='direct', 
+                        estimator='MLR')
+
+semTools::reliability(IESR.fit)
+```
+
