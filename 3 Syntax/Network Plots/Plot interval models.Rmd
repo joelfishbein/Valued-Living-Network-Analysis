@@ -13,15 +13,8 @@ library(tidyverse)
 library(here)
 library(qgraph)
 
-
-PreToMid.fit <- read_rds(here('Fitted model objects','Nonmoderated','Nonbootstrapped','PreToMid.fit'))
-MidToPost.fit <- read_rds(here('Fitted model objects','Nonmoderated','Nonbootstrapped','MidToPost.fit'))
-PostTo3MFU.fit <- read_rds(here('Fitted model objects','Nonmoderated','Nonbootstrapped','PostTo3MFU.fit'))
-my3mTo6mFU.fit <- read_rds(here('Fitted model objects','Nonmoderated','Nonbootstrapped','my3mTo6mFU.fit'))
-
-# haven't generated these yet
-#PreToPost.fit <- read_rds(here('Fitted model objects','PreToPost.fit'))
-#PreTo6mFU.fit <- read_rds(here('Fitted model objects','PreTo6mFU.fit'))
+PreToPost.fit <- read_rds(here('Fitted model objects','Nonmoderated','Nonbootstrapped','PreToPost.fit'))
+PreTo6mFU.fit <- read_rds(here('Fitted model objects','Nonmoderated','Nonbootstrapped','PreTo6mFU.fit'))
 ```
 
 
@@ -39,6 +32,7 @@ plot_my_mgm <- function(my_mgm_fit){
          repulsion = 1.3,
          edge.color = my_colorblind_edge_colors, 
          legend.cex=.4, 
+          edge.labels = TRUE,
          vsize = 3.5, esize = 15, labels = c('TX','HADS','IESR','FCR','SCS','EAC','AAQc'))
 }
   
@@ -50,48 +44,26 @@ plot_my_mgm <- function(my_mgm_fit){
 
 ```{r}
 
-PreToMid.plot <- plot_my_mgm(PreToMid.fit)
-MidToPost.plot <- plot_my_mgm(MidToPost.fit)
-PostTo3MFU.plot <- plot_my_mgm(PostTo3MFU.fit)
-my3mTo6mFU.plot <- plot_my_mgm(my3mTo6mFU.fit)
 
-#PreToPost.plot <- plot_my_mgm(PreToPost.fit)
-#PreTo6mFU.plot <- plot_my_mgm(PreTo6mFU.fit)
+PreToPost.plot <- plot_my_mgm(PreToPost.fit)
+PreTo6mFU.plot <- plot_my_mgm(PreTo6mFU.fit)
 
 ```
 
-## Save layout of Pre to Post
-
-Not doing this for now because just doing circle plots, but may come back to this
-
-```{r}
-
-# save this layout so other plots can be done with this same layout
-#PreToPost.layout <-  PreToPost.plot$layout
-
-```
 
 ## Output plots for each interval
 
 ```{r}
-qgraph::qgraph(PreToMid.plot, title.cex = 2, title = "Pre To Mid", 
-               node.width = 2,
-               #layout = PreToPost.layout, # this is how we would specify to use some other layout
-               filetype = 'png', filename = here('Plots','PreToMid Sample Network'))
-
-qgraph::qgraph(MidToPost.plot, title.cex = 2, title = "Mid To Post", 
-               node.width = 2,
-               filetype = 'png', filename = here('Plots','MidToPost Sample Network'))
 
 
-qgraph::qgraph(PostTo3MFU.plot, title.cex = 2, title = "Post To 3MFU", 
+qgraph::qgraph(PreToPost.plot, title.cex = 2, title = "A. Pre to Post", 
                node.width = 2,
-               filetype = 'png', filename = here('Plots','PostTo3MFU Sample Network'))
+               filetype = 'png', filename = here('Plots','Pre to Post Sample Network'))
 
-qgraph::qgraph(my3mTo6mFU.plot, title.cex = 2, title = "3m To 6m FU", 
+
+qgraph::qgraph(PreTo6mFU.plot, title.cex = 2, title = "B. Pre to 6M FU", 
                node.width = 2,
-               filetype = 'png', filename = here('Plots','my3mTo6mFU Sample Network'))
+               filetype = 'png', filename = here('Plots','Pre to 6m FU Sample Network'))
 
 
 ```
-
