@@ -14,10 +14,7 @@ library(here)
 library(mgm)
 library(qgraph)
 
-PreToMid.fit <- read_rds(here('Fitted model objects','Moderated','Not bootstrapped','PreToMid.moderated.fit'))
-MidToPost.fit <- read_rds(here('Fitted model objects','Moderated','Not bootstrapped','MidToPost.moderated.fit'))
-PostTo3MFU.fit <- read_rds(here('Fitted model objects','Moderated','Not bootstrapped','PostTo3MFU.moderated.fit'))
-my3mTo6mFU.fit <- read_rds(here('Fitted model objects','Moderated','Not bootstrapped','my3mTo6mFU.moderated.fit'))
+
 PreToPost.fit <- read_rds(here('Fitted model objects','Moderated','Not bootstrapped','PreToPost.moderated.fit'))
 PreTo6mFU.fit <- read_rds(here('Fitted model objects','Moderated','Not bootstrapped','PreTo6mFU.moderated.fit'))
 
@@ -59,42 +56,7 @@ plotModeratedNetworkModel <- function(fit){
 
 ```
 
-\newpage
-# Pre To Mid
-```{r}
 
-plotModeratedNetworkModel(PreToMid.fit)
-
-
-```
-
-\newpage
-# Mid To Post
-```{r}
-
-plotModeratedNetworkModel(MidToPost.fit)
-
-
-```
-
-\newpage
-# Post To 3m FU
-```{r}
-
-plotModeratedNetworkModel(PostTo3MFU.fit)
-
-
-```
-
-\newpage
-# Post To 3m FU
-```{r}
-
-plotModeratedNetworkModel(my3mTo6mFU.fit)
-
-
-```
-\newpage
 # Pre to Post
 
 ```{r}
