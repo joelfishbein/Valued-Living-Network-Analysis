@@ -86,12 +86,12 @@ fit_my_mgm.moderated <- function(my_data){
 
 ```
 
+
 # Change score models - setup and generic functions
 
 ## Create dataset of change scores
 
 ```{r}
-
 ChangeScores_data <- data_all_timepoints %>%
   
   pivot_longer(cols = HADS.A:AAQc, names_to = 'instrument') %>%
@@ -113,8 +113,66 @@ ChangeScores_data <- data_all_timepoints %>%
   # pivot to long by interval, by participant, wide by instrument
   # consistent with format we will want to estimate networks
   pivot_wider(names_from = instrument)
+```
+
+## Extract data for one interval
+
+```{r}
+getDataForInterval <- function(ChangeScores, my_interval){
+  data_to_return <- ChangeScores %>% filter(ChangeScore == my_interval) %>%
+    select(-ChangeScore, -ID) %>%
+    
+  # drop full rows with any missing observations
+    drop_na()
+  return(data_to_return)
+}
+```
+
+## Wrappers
+
+```{r}
+runChangeScoreNetwork <- function(ChangeScore_data, my_interval, moderated = FALSE){
+  
+  data <- getDataForInterval(ChangeScore_data, my_interval) %>%
+    as.matrix()
+  
+  ifelse(moderated == TRUE,
+         fit <- fit_my_mgm.moderated(data),
+         fit <- fit_my_mgm(data))
+  
+  return(fit)
+}
+runBootstrappedChangeScoreNetwork <- function(ChangeScore_data, my_interval, nB = 5000){
+  
+  data <- getDataForInterval(ChangeScore_data, my_interval) %>%
+    as.matrix()
+  
+  fit <- fit_my_mgm(data)
+  
+  fit.boot <- resample(object = fit, 
+                               data = data, 
+                               nB = nB)
+  
+  return(fit.boot)
+}
 
 ```
+
+## Get data for specific intervals and save it to compute reliability
+
+```{r}
+
+PreToPost.data <- getDataForInterval(ChangeScores_data, 'PreToPost') %>%
+    as.matrix()
+
+PreTo6MFU.data <- getDataForInterval(ChangeScores_data, 'PreTo6mFU') %>%
+    as.matrix()
+
+write_rds(PreToPost.data, file = here('4 Generated Datasets','PreToPost.data.rds'))
+write_rds(PreTo6MFU.data, file = here('4 Generated Datasets','PreTo6MFU.data.rds'))
+
+```
+
 
 # Unmoderated Change Score Network Models
 
