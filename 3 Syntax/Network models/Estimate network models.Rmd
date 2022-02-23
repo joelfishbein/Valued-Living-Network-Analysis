@@ -8,15 +8,6 @@ output:
     toc_float: yes
 ---
 
-TO DISCUSS:
-- lasso parameter? (don't do this)
-- remove variables? (try after bootstrapping)
-- simulation/bootstrapping? (do this first)
-- moderation?
-
-Condition-HADS:  Est    Quantiles of bootstrapped sampling dist    % bootstrapped samples it's nonzero in
-
-(no CI because regularization removes/shrinks low estimates)
 
 # Read in the data and libraries
 
@@ -125,131 +116,7 @@ ChangeScores_data <- data_all_timepoints %>%
 
 ```
 
-## Extract data for one interval
-
-```{r}
-
-getDataForInterval <- function(ChangeScores, my_interval){
-  data_to_return <- ChangeScores %>% filter(ChangeScore == my_interval) %>%
-    select(-ChangeScore, -ID) %>%
-    
-  # drop full rows with any missing observations
-    drop_na()
-  return(data_to_return)
-}
-
-```
-
-## Wrappers
-
-```{r}
-
-runChangeScoreNetwork <- function(ChangeScore_data, my_interval, moderated = FALSE){
-  
-  data <- getDataForInterval(ChangeScore_data, my_interval) %>%
-    as.matrix()
-  
-  ifelse(moderated == TRUE,
-         fit <- fit_my_mgm.moderated(data),
-         fit <- fit_my_mgm(data))
-  
-  return(fit)
-
-}
-
-runBootstrappedChangeScoreNetwork <- function(ChangeScore_data, my_interval, nB = 5000){
-  
-  data <- getDataForInterval(ChangeScore_data, my_interval) %>%
-    as.matrix()
-  
-  fit <- fit_my_mgm(data)
-  
-  fit.boot <- resample(object = fit, 
-                               data = data, 
-                               nB = nB)
-  
-  return(fit.boot)
-
-}
-```
 # Unmoderated Change Score Network Models
-
-## PreToMid
-
-
-```{r}
-
-PreToMid.fit <- runChangeScoreNetwork(ChangeScores_data, 'PreToMid')
-
-write_rds(x = PreToMid.fit, file = here('Fitted model objects',
-                                         'Nonmoderated',
-                                        'Nonbootstrapped',
-                                        'PreToMid.fit'))
-
-PreToMid.fit.boot <- runBootstrappedChangeScoreNetwork(ChangeScores_data, 'PreToMid')
-
-write_rds(x = PreToMid.fit.boot, file = here('Fitted model objects','PreToMid.fit.boot'))
-
-
-```
-
-## MidToPost
-
-```{r}
-
-MidToPost.fit <- runChangeScoreNetwork(ChangeScores_data, 'MidToPost')
-
-write_rds(x = MidToPost.fit, file = here('Fitted model objects',
-                                         'Nonmoderated',
-                                        'Nonbootstrapped',
-                                        'MidToPost.fit'))
-
-
-MidToPost.fit.boot <- runBootstrappedChangeScoreNetwork(ChangeScores_data, 'MidToPost')
-
-write_rds(x = MidToPost.fit, file = here('Fitted model objects','MidToPost.fit.boot'))
-
-
-```
-
-## PostTo3mFU
-
-```{r}
-
-PostTo3MFU.fit <- runChangeScoreNetwork(ChangeScores_data, 'PostTo3mFU')
-
-write_rds(x = PostTo3MFU.fit, file = here('Fitted model objects',
-                                         'Nonmoderated',
-                                        'Nonbootstrapped',
-                                        'PostTo3MFU.fit'))
-
-
-PostTo3MFU.fit.boot <- runBootstrappedChangeScoreNetwork(ChangeScores_data, 'PostTo3mFU')
-
-write_rds(x = PostTo3MFU.fit, file = here('Fitted model objects','PostTo3MFU.fit.boot'))
-
-
-```
-
-
-## 3mFUTo6mFU
-
-```{r}
-my3mTo6mFU.fit <- runChangeScoreNetwork(ChangeScores_data, '3mFUTo6mFU')
-
-write_rds(x = my3mTo6mFU.fit, file = here('Fitted model objects',
-                                         'Nonmoderated',
-                                        'Nonbootstrapped',
-                                        'my3mTo6mFU.fit'))
-
-
-my3mTo6mFU.fit.boot <- runBootstrappedChangeScoreNetwork(ChangeScores_data, '3mFUTo6mFU')
-
-write_rds(x = my3mTo6mFU.fit , file = here('Fitted model objects','my3mTo6mFU.fit.boot'))
-
-
-```
-
 
 ## PreToPost 
 
@@ -260,37 +127,33 @@ PreToPost.fit <- runChangeScoreNetwork(ChangeScores_data, 'PreToPost')
 write_rds(x = PreToPost.fit, file = here('Fitted model objects',
                                          'Nonmoderated',
                                         'Nonbootstrapped',
-                                        'PreToPost.fit_fix_binary_problem'))
-
-
-new <- read_rds(file = here('Fitted model objects',
-                                         'Nonmoderated',
-                                        'Nonbootstrapped',
-                                        'PreToPost.fit_fix_binary_problem'))
-
-old <- read_rds(file = here('Fitted model objects',
-                                         'Nonmoderated',
-                                        'Nonbootstrapped',
                                         'PreToPost.fit'))
+
+
 
 PreToPost.fit.boot <- runBootstrappedChangeScoreNetwork(ChangeScores_data, 'PreToPost')
 
-write_rds(x = PreToPost.fit.boot, file = here('Fitted model objects','PreToMid.fit.boot'))
+write_rds(x = PreToPost.fit.boot, file = here('Fitted model objects','PreToPost.fit.boot'))
 
-PreToPost.fit.boot <- read_rds(file = here('Fitted model objects','PreToMid.fit.boot'))
-mgm::plotRes(PreToPost.fit.boot, labels = c('TX','HADS','IESR','FCR','SCS','EAC','AAQc'))
-
-PreToPost.fit$interactions
 ```
 \newpage
 
 ## PreTo6mFU 
 ```{r}
-# PreTo6mFU.fit <- runBootstrappedChangeScoreNetwork(ChangeScores_data, 'PreTo6mFU')
-# 
-# write_rds(x = PreTo6mFU.fit , file = here('Fitted model objects','PreTo6mFU.fit.boot'))
+PreTo6mFU.fit <- runChangeScoreNetwork(ChangeScores_data, 'PreTo6mFU')
 
+write_rds(x = PreTo6mFU.fit , file = here('Fitted model objects',
+                                          'Nonmoderated',
+                                          'Nonbootstrapped',
+                                          'PreTo6mFU.fit'))
 
+PreTo6mFU.fit.boot <- runBootstrappedChangeScoreNetwork(ChangeScores_data, 'PreTo6mFU')
+
+write_rds(x = PreTo6mFU.fit.boot, file = here('Fitted model objects','PreTo6mFU.fit.boot'))
+
+PreTo6mFU.fit.boot <- read_rds(file = here('Fitted model objects','PreTo6mFU.fit.boot'))
+
+plotRes(PreTo6mFU.fit.boot, labels = c('TX','HADS','IESR','FCR','SCS','EAC','AAQc'))
 ```
 
 
@@ -299,59 +162,6 @@ PreToPost.fit$interactions
 
 
 # Moderated Change Score Network Models
-
-
-## PreToMid
-
-```{r}
-PreToMid.moderated.fit <- runChangeScoreNetwork(ChangeScores_data, 'PreToMid', moderated = TRUE)
-
-write_rds(x = PreToMid.moderated.fit, file = here('Fitted model objects',
-                                                  'Moderated',
-                                                  'Not bootstrapped',
-                                                  'PreToMid.moderated.fit'))
-
-```
-
-## MidToPost
-
-```{r}
-MidToPost.moderated.fit <- runChangeScoreNetwork(ChangeScores_data, 'MidToPost', moderated = TRUE)
-
-write_rds(x = MidToPost.moderated.fit, file = here('Fitted model objects',
-                                                   'Moderated',
-                                                   'Not bootstrapped',
-                                                   'MidToPost.moderated.fit'))
-
-
-```
-
-## PostTo3mFU
-
-```{r}
-PostTo3MFU.moderated.fit <- runChangeScoreNetwork(ChangeScores_data, 'PostTo3mFU', moderated = TRUE)
-
-write_rds(x = PostTo3MFU.moderated.fit, file = here('Fitted model objects',
-                                                    'Moderated',
-                                                    'Not bootstrapped',
-                                                    'PostTo3MFU.moderated.fit'))
-
-
-```
-
-
-## 3mFUTo6mFU
-
-```{r}
-my3mTo6mFU.moderated.fit <- runChangeScoreNetwork(ChangeScores_data, '3mFUTo6mFU', moderated = TRUE)
-
-write_rds(x = my3mTo6mFU.moderated.fit , file = here('Fitted model objects',
-                                                     'Moderated',
-                                                     'Not bootstrapped',
-                                                     'my3mTo6mFU.moderated.fit'))
-
-
-```
 
 
 ## PreToPost 
@@ -365,6 +175,18 @@ write_rds(x = PreToPost.moderated.fit , file = here('Fitted model objects',
                                                     'Not bootstrapped',
                                                     'PreToPost.moderated.fit'))
 
+
+PreToPost.moderated.fit.boot <- runBootstrappedChangeScoreNetwork(ChangeScores_data, 'PreToPost', moderated = TRUE)
+  
+write_rds(x = PreToPost.moderated.fit.boot , file = here('Fitted model objects',
+                                                    'Moderated',
+                                                    'Bootstrapped',
+                                                    'PreToPost.moderated.fit.boot'))
+
+
+
+
+
 ```
 \newpage
 
@@ -376,6 +198,13 @@ write_rds(x = PreTo6mFU.moderated.fit , file = here('Fitted model objects',
                                                     'Moderated',
                                                     'Not bootstrapped',
                                                     'PreTo6mFU.moderated.fit'))
+
+PreTo6mFU.moderated.fit.boot <- runBootstrappedChangeScoreNetwork(ChangeScores_data, 'PreTo6mFU', moderated = TRUE)
+  
+write_rds(x = PreTo6mFU.moderated.fit.boot , file = here('Fitted model objects',
+                                                    'Moderated',
+                                                    'Bootstrapped',
+                                                    'PreTo6mFU.moderated.fit.boot'))
 
 
 ```
