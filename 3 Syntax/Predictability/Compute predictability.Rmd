@@ -1,0 +1,92 @@
+---
+title: "Compute Predictability"
+output: html_notebook
+---
+
+Brief description of this approach provided in: https://jonashaslbeck.com/Predictability-in-network-models/
+
+Fuller examination in: https://link.springer.com/article/10.3758/s13428-017-0910-x
+
+# Read data
+
+```{r}
+library(tidyverse)
+library(kableExtra)
+library(here)
+library(mgm)
+
+PreToPost.fit <- read_rds(here('Fitted model objects','Nonmoderated','Nonbootstrapped','PreToPost.fit'))
+
+PreTo6mFU.fit <- read_rds(here('Fitted model objects','Nonmoderated','Nonbootstrapped','PreTo6mFU.fit'))
+
+PreToPost.data <- read_rds(file = here('4 Generated Datasets','PreToPost.data.rds'))
+PreTo6MFU.data <- read_rds(file = here('4 Generated Datasets','PreTo6MFU.data.rds'))
+
+```
+
+# Compute R2 predictability
+
+## Generic function
+
+```{r}
+getNodePredictability <- function(fit, data){
+  
+  predictions <- predict(fit,
+                         data = data,
+                         errorCon = 'R2')
+  
+  to.return <- predictions$error %>%
+    filter(!is.na(R2)) %>%
+    select(Variable, R2)
+  
+  return(to.return)
+}
+
+
+```
+
+```{r}
+
+PreToPost.predictions <- predict(PreToPost.fit,
+                                 data = PreToPost.data,
+                                 errorCon = 'R2')
+
+PreToPost.predictions$error
+```
+
+
+# Compute predictability
+
+```{r}
+
+PreTo6MFU.predictions <- predict(PreTo6mFU.fit,
+                                 data = PreTo6MFU.data,
+                                 errorCon = 'R2')
+
+PreTo6MFU.predictions$error %>%
+  filter(!is.na(R2)) %>%
+  select(Variable, R2)
+```
+
+
+# Assemble Table
+
+```{r}
+
+left_join(getNodePredictability(PreToPost.fit, PreTo6MFU.data),
+      getNodePredictability(PreTo6mFU.fit, PreTo6MFU.data), by = 'Variable') %>%
+  
+  rename(`Node` = Variable,
+    `Pre to Post R2` = R2.x,
+         `Pre to FU R2` = R2.y) %>%
+  
+  arrange(-`Pre to Post R2`) %>%
+  
+  mutate(across(is.numeric, finalfit::round_tidy, digits = 2)) %>%
+  
+  kable() %>%
+  
+  kable_classic(html_font = 'Times New Roman', full_width = FALSE) 
+
+```
+
