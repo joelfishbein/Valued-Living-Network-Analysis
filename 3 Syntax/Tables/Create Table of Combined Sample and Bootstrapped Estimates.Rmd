@@ -15,6 +15,10 @@ PreToPost.fit.no_boot <- read_rds(here('Fitted model objects','Nonmoderated','No
 
 PreToPost.fit.boot <- read_rds(here('Fitted model objects','PreToPost.fit.boot'))
 
+PreTo6mFU.fit.no_boot <- read_rds(here('Fitted model objects','Nonmoderated','Nonbootstrapped','PreTo6mFU.fit'))
+
+PreTo6mFU.fit.boot <- read_rds(here('Fitted model objects','PreTo6mFU.fit.boot'))
+
 ```
 
 
@@ -58,7 +62,7 @@ getTidyAdjacencyMatrix <- function(mgm_fit){
     
     # format as long by variable 1 and variable 2
     pivot_longer(cols = ACTorMEUC:AAQc, names_to = 'Variable 2') %>%
-    mutate(value = round(value,2)) %>%
+    mutate(value = finalfit::round_tidy(value,2)) %>%
     
     # remove redundant entries
     
@@ -141,7 +145,7 @@ getBootEstimates <- function(object){
       rename(`Mean Boot Estimate of Edge Weight` = Mean,
             `Boot 5%` = qtl_low,
              `Boot 95%` = qtl_high,
-             `% Boot Samples Where Edge Was Nonzero` = propLtZ)
+             `Bootstrap Stability %` = propLtZ)
     
     return(EdgeWeights)
     
@@ -185,11 +189,74 @@ getEdgeType <- function(var_name_1, var_name_2){
 
 ```
 
+# Combine non boot and boot models
+
+```{r}
+
+getCombinedNonBootandBootEstimates <- function(model.no_boot.fit, model.boot.fit) {
+  
+  adjacency.no_boot <- getTidyAdjacencyMatrix(model.no_boot.fit)
+  
+  boot.estimates <- getBootEstimates(model.boot.fit)
+  
+  
+  process_vars <- c("AAQc","EAC","SCS")
+  outcome_vars <- c("IESR","HADS","FCR")
+  
+  combined.table <- left_join(adjacency.no_boot, boot.estimates, by = c('Variable 1', 'Variable 2')) %>%
+    # drop rows that are association of variable with itself
+    filter(!is.na(`Mean Boot Estimate of Edge Weight`)) %>%
+    
+    rename(`Sample Estimate` = value) %>%
+    
+    # setup type variable using case_when
+    mutate(Type = case_when(
+      
+      `Variable 1` == "ACTorMEUC" ~ "Intervention Effects",
+      `Variable 1` %in% process_vars & `Variable 2` %in% process_vars ~ "Process Variable Associations",
+      `Variable 1` %in% outcome_vars & `Variable 2` %in% outcome_vars ~ "Outcome Variable Associations",
+      TRUE ~ "Process-Outcome Associations")) %>%
+    
+    mutate(Type = factor(Type,
+                         levels = c("Intervention Effects",
+                                    "Process Variable Associations",
+                                    "Outcome Variable Associations",
+                                    "Process-Outcome Associations"))) %>%
+    
+    
+    
+    
+    relocate(Type) %>%
+    
+    arrange(Type) %>%
+    
+    mutate(across(is.numeric, ~round(.x,2))) %>%
+    
+    mutate(`Boostrap Mean [95% CI] Estimate` = str_c(`Mean Boot Estimate of Edge Weight`, 
+                                                     ' [',
+                                                     `Boot 5%`,
+                                                     ', ',
+                                                     `Boot 95%`,
+                                                     ']')) %>%
+    
+    relocate(`Boostrap Mean [95% CI] Estimate`, .after = `Sample Estimate`) %>%
+    
+    # make this into a percentage
+    mutate(`Bootstrap Stability %` = `Bootstrap Stability %`* 100) %>%
+    
+    select(-`Mean Boot Estimate of Edge Weight`,-`Boot 5%`,-`Boot 95%`)
+  
+}
+
+
+```
 
 # Obtain estimates from non-boot model
 ```{r}
 
-adjacency.no_boot <- getTidyAdjacencyMatrix(PreToPost.fit.no_boot)
+PreToPost.adjacency.no_boot <- getTidyAdjacencyMatrix(PreToPost.fit.no_boot)
+
+PreTo6mFU.adjacency.no_boot <- getTidyAdjacencyMatrix(PreTo6mFU.fit.no_boot)
 
 ```
 
@@ -197,7 +264,9 @@ adjacency.no_boot <- getTidyAdjacencyMatrix(PreToPost.fit.no_boot)
 
 ```{r}
 
-estimates.boot <- getBootEstimates(PreToPost.fit.boot)
+PreToPost.estimates.boot <- getBootEstimates(PreToPost.fit.boot)
+
+PreTo6mFU.estimates.boot <- getBootEstimates(PreTo6mFU.fit.boot)
 
 ```
 
@@ -205,28 +274,26 @@ estimates.boot <- getBootEstimates(PreToPost.fit.boot)
 
 ```{r}
 
-process_vars <- c("AAQc","EAC","SCS")
-outcome_vars <- c("IESR","HADS","FCR")
+PreToPost.table <- getCombinedNonBootandBootEstimates(PreToPost.fit.no_boot, PreToPost.fit.boot)
+PreTo6mFU.table <- getCombinedNonBootandBootEstimates(PreTo6mFU.fit.no_boot, PreTo6mFU.fit.boot)
 
-PreToPost.table <- left_join(adjacency.no_boot, estimates.boot, by = c('Variable 1', 'Variable 2')) %>%
-  # drop rows that are association of variable with itself
-  filter(!is.na(`Mean Boot Estimate of Edge Weight`)) %>%
-  rowwise() %>%
+combined.table <- left_join(PreToPost.table, PreTo6mFU.table, by = c("Variable 1", "Variable 2"))
+```
+
+
+# Print
+
+
+```{r}
+combined.table %>%
+  select(-Type.x, -Type.y) %>%
+  kable(col.names = c('Variable 1','Variable 2', 
+                      rep(c('Sample Estimate','Bootstrap Mean [95% CI] Estimate', 'Nonzero %'),2))) %>%
   
-  # setup type variable using case_when
-  mutate(Type = case_when(
-         
-         `Variable 1` == "ACTorMEUC" ~ "Intervention Effect",
-         `Variable 1` %in% process_vars & `Variable 2` %in% process_vars ~ "Process Variable Associations",
-         `Variable 1` %in% outcome_vars & `Variable 2` %in% outcome_vars ~ "Outcome Variable Associations",
-         TRUE ~ "Process-Outcome Associations")) %>%
-         
-         
-        
-  relocate(Type)
-
-
-  
-
-PreToPost.table
+  kableExtra::kable_classic(html_font = 'Times New Roman', full_width = FALSE) %>%
+  kableExtra::add_header_above(c("Edge Definition " = 2, "Pre to Post" = 3, "Pre to 6M FU" = 3)) %>%
+  kableExtra::group_rows(start_row = 1, end_row = 6, group_label = 'Intervention Effects') %>%
+  kableExtra::group_rows(start_row = 7, end_row = 9, group_label = 'Process Variable Associations') %>%
+  kableExtra::group_rows(start_row = 10, end_row = 12, group_label = 'Outcome Variable Associations') %>%
+  kableExtra::group_rows(start_row = 13, end_row = 21, group_label = 'Process-Outcome Associations')
 ```
