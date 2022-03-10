@@ -1,0 +1,152 @@
+---
+title: "Plot networks with bootstrapped results"
+output: html_notebook
+---
+
+# Read in libraries and previously fitted models
+
+```{r}
+
+library(mgm)
+library(qgraph)
+library(here)
+library(ggpubr)
+library(tidyverse)
+
+PreToMid.fit <- read_rds(here('Fitted model objects','PreToMid.fit'))
+MidToPost.fit <- read_rds(here('Fitted model objects','MidToPost.fit'))
+PostTo3MFU.fit <- read_rds(here('Fitted model objects','PostTo3MFU.fit'))
+my3mTo6mFU.fit <- read_rds(here('Fitted model objects','my3mTo6mFU.fit'))
+
+
+PreToMid.fit.boot <- read_rds(here('Fitted model objects','PreToMid.fit.boot'))
+MidToPost.fit.boot <- read_rds(here('Fitted model objects','MidToPost.fit.boot'))
+PostTo3MFU.fit.boot <- read_rds(here('Fitted model objects','PostTo3MFU.fit.boot'))
+my3mTo6mFU.fit.boot <- read_rds(here('Fitted model objects','my3mTo6mFU.fit.boot'))
+
+var_names <- c( 'TX', 'HADS','IESR', 'FCR', 'SCS', 'EAC', 'AAQc')
+```
+
+## Generic plotting function
+
+```{r}
+
+plot_my_mgm <- function(my_mgm_fit){
+  
+  my_edgeweights <- my_mgm_fit$pairwise$wadj
+  
+  my_colorblind_edge_colors <- my_mgm_fit$pairwise$edgecolor_cb
+  
+  qgraph(my_edgeweights, 
+         #layout = 'spring', 
+         layout = 'circle',
+         repulsion = 1,
+         edge.color = my_colorblind_edge_colors, 
+         legend.cex=.4, 
+         vsize =5, esize = 15, labels = var_names)
+}
+
+plot_my_mgm(PreToMid.fit)
+
+```
+
+
+```{r}
+
+getEdgeEstimates <- function(object){
+  
+  # the following is copied from Jonas's code
+  
+  quantiles <- c(.05, .95)
+  
+  dims <- dim(object$bootParameters)
+    p <- dims[1]
+    nB <- dims[3]
+    n_pars <- p*(p-1) / 2
+    
+    # Collapse into edge x property matrix
+    tar_mat <- matrix(NA, nrow=n_pars, ncol = 6)
+    colnames(tar_mat) <- c("Variable A", "Variable B", "Mean", "qtl_low", "qtl_high", "propLtZ")
+    
+    counter <- 1
+    for(row in 1:p) {
+      for(col in row:p) {
+        if(row!=col){
+          
+          # Variable ids
+          tar_mat[counter, 1] <- row
+          tar_mat[counter, 2] <- col
+          
+          # Quantiles
+          qtls <- quantile(object$bootParameters[row, col, ], probs = quantiles)
+          tar_mat[counter, 3] <- mean(object$bootParameters[row, col, ])
+          tar_mat[counter, 4] <- qtls[1]
+          tar_mat[counter, 5] <- qtls[2]
+          tar_mat[counter, 6] <- mean(abs(object$bootParameters[row, col, ]) > 0) # proportion estimates > 0
+          
+          # update counter
+          counter <- counter + 1
+        }
+      }
+    }
+    
+    # now that the matrix is completed, new code to turn it into a tibble with my variable names embedded
+    
+    variable_names <- tibble(numbers = as.double(c(1:7)),
+                             names = c( 'ACTorMEUC', 'HADS','IESR', 'FCR', 'SCS', 'EAC', 'AAQc'))
+    
+    EdgeWeights <-
+      tar_mat %>%
+      as_tibble %>%
+      
+      # pull in variable names for each variable column
+      left_join(variable_names, by = c ("Variable A" = "numbers")) %>%
+      select(-`Variable A`) %>%
+      rename(`Variable 1` = names) %>%
+      left_join(variable_names, by = c ("Variable B" = "numbers")) %>%
+      select(-`Variable B`) %>%
+      rename(`Variable 2` = names) %>%
+      
+      # rearrange column order
+      relocate(`Variable 2`, .before = Mean) %>%
+      relocate(`Variable 1`, .before = `Variable 2`) %>%
+      
+      # rename columns
+      rename(`Mean Estimate of Edge Weight` = Mean,
+            `5%` = qtl_low,
+             `95%` = qtl_high,
+             `% Samples Where Edge Was Nonzero` = propLtZ)
+    
+    return(EdgeWeights)
+    
+}
+
+```
+
+
+```{r}
+
+plot_network_and_bootstrap <- function(sample.fit, sample.fit.boot){
+  
+  my_plot <- plot_my_mgm(sample.fit)
+  
+  my_resampled_plot <-getEdgeEstimates(sample.fit.boot) %>%
+  mutate(across(is.double, .fns = round, digits = 2 )) %>%
+  ggtexttable()
+  
+  return(ggarrange(my_plot, my_resampled_plot, nrow = 1))
+}
+
+
+
+
+
+```
+
+```{r}
+
+my_resampled_plot <-mgm::plotRes(PreToMid.fit.boot, labels = var_names)
+
+plot_network_and_bootstrap(PreToMid.fit, PreToMid.fit.boot)
+
+```
