@@ -1,0 +1,163 @@
+---
+title: "R Notebook"
+author: Joel Fishbein
+date: May 16 2022
+output:
+  html_document:
+  df_print: paged
+---
+  
+
+# Setup
+
+```{r}
+library(tidyverse)
+library(here)
+library(kableExtra)
+
+
+load(file = here('4 Generated Datasets', 'PrePost_mediation_models_ANCOVA_equivalent.RData'))
+# drop the functions so that the mapping works
+
+```
+
+
+# Tidy up model estimates
+
+```{r}
+# write everything into one list 
+# so that purrr() library can be used
+models <-
+  mget(ls()) %>% 
+  list()
+# tidy every model
+
+tidy_model_output <-
+  models[[1]] %>%
+  purrr::map(broom::tidy, conf.int = TRUE) 
+
+getCI <- function(paths){
+  paths %>%
+    mutate(ci.95 = stringr::str_c('[',
+                                   finalfit::round_tidy(conf.low,2),
+                                   ', ',
+                                   finalfit::round_tidy(conf.high,2),
+                                   ']'))}
+
+getPaths <- function(tidy_lavaan_fit){
+  
+  tidy_lavaan_fit %>%
+    filter(label %in% c('a','b','cprime','ab')) %>%
+    mutate(label = factor(label, levels = c('a','b','cprime','ab'))) %>%
+    arrange(label)
+  
+  }
+
+myPaths <-
+  tidy_model_output %>%
+  map(getPaths) %>%
+  map(getCI) 
+  
+
+
+```
+
+# Extract model information
+
+```{r}
+estimates <-
+  myPaths %>%
+  map_df(c('estimate')) %>%
+  t() %>%
+  magrittr::set_colnames(c('a_estimate','b_estimate','cprime_estimate','ab_estimate')) %>%
+  as_tibble(rownames = 'model') %>%
+  mutate(across(is.numeric, finalfit::round_tidy,2))
+
+standard_errors <-
+  myPaths %>%
+  map_df(c('std.error')) %>%
+  t() %>%
+  magrittr::set_colnames(c('a_stderr','b_stderr','cprime_stderr','ab_stderr')) %>%
+  as_tibble(rownames = 'model') %>%
+  mutate(across(is.numeric, finalfit::round_tidy,2))
+
+
+cis <-
+  myPaths %>%
+  map_df(c('ci.95')) %>%
+  t() %>%
+  magrittr::set_colnames(c('a_ci.95','b_ci.95','cprime_ci.95','ab_ci.95')) %>%
+  as_tibble(rownames = 'model') %>%
+  mutate(across(is.numeric, finalfit::round_tidy,2))
+
+p_values <-
+  myPaths %>%
+  map_df(c('p.value')) %>%
+  t()%>%
+  magrittr::set_colnames(c('a_pval','b_pval','cprime_pval','ab_pval')) %>%
+  as_tibble(rownames = 'model') %>%
+  mutate(across(is.numeric, finalfit::round_tidy,3))
+
+my_estimates_table <- left_join(estimates, standard_errors, by = "model") %>%
+  left_join(cis, by = "model") %>%
+  left_join(p_values, by = "model") %>%
+  
+  # rearrange order for convenience
+  select(model, a_estimate, a_stderr, a_ci.95, a_pval,
+         b_estimate, b_stderr, b_ci.95, b_pval,
+         cprime_estimate, cprime_stderr, cprime_ci.95, cprime_pval,
+         ab_estimate, ab_stderr, ab_ci.95, ab_pval) %>%
+  
+  
+  # split the "model" column so that one string column
+  # contains the name of the mediator, and another the outcome
+  
+  separate(col = model,
+           into = c('mediator_var','outcome_var','contemporaneous_or_lagged'), 
+           sep = '_') %>%
+  
+  select(-contemporaneous_or_lagged) %>%
+  select( -a_stderr, -b_stderr, -ab_stderr, -cprime_stderr)
+
+
+```
+
+
+# Create table
+
+## Output with kable
+
+
+```{r}
+
+my_estimates_table %>%
+
+knitr::kable(my_estimates_table, 
+             caption = 'Mediation model path estimates',
+             format = 'html',
+             col.names = c('Mediator','Outcome', 
+                           #rep(c('Estimate','SE','Bootstrapped 95% CI',"p"),5))) %>%
+                           rep(c('Estimate','Bootstrapped 95% CI',"p"),4))) %>%
+  
+  kable_classic(html_font = 'Times New Roman') %>%
+  
+  # custom edit the outcome mediator and outcome 
+  # variable name columns so they display nicely on one line
+  # 
+  # # mediator name
+  # column_spec(column = 1,
+  #             width_min = "8em") %>%
+  # 
+  # # outcome name
+  #   column_spec(column = 3,
+  #             width_min = "13em") %>%
+  # 
+  # collapse_rows(columns = 1:2, valign = 'top') %>%
+  
+  add_header_above(c("Variables" = 2, 
+                     "a path" = 3, 
+                     "b path" = 3, 
+                     "c' path" = 3 , 
+                     "ab" = 3)) 
+
+```
