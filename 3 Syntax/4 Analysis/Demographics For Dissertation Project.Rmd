@@ -25,7 +25,7 @@ library(tableone)
 library(here)
 
 # most of the demographic variables are stored here
-outcomesDB <- read_csv('~/Data - lives on HD/RCT ACT for CA Survivors/Outcome database/current/data/RCT_Qualtrics_Unabridged_10.12.20.csv',
+outcomesDB <- read_csv('~/On HD/Raw data/Valued Living Study/RCT_Qualtrics_Unabridged_10.12.20.csv',
                    na = '#NULL!')
 
 # a couple extra variables are stored here 
