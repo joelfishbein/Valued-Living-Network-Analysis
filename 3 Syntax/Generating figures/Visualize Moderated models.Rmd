@@ -32,6 +32,10 @@ Changes made to accomodate just 2 groups instead of 3 in that example
 
 plotModeratedNetworkModel <- function(fit){
   l_mgm_cond <- list()
+  
+    my.groups <- c("Condition",rep("Outcome",3),rep("Process",3))
+                
+  
   for(g in 1:2) l_mgm_cond[[g]] <- condition(object = fit, 
                                              
                                              # g-1 since ACTorMEUC is coded as 0 = MEUC, 1 = ACT
@@ -52,6 +56,12 @@ plotModeratedNetworkModel <- function(fit){
            maximum = max(v_max), 
            edge.label.cex = 1.5, # edge text size
   vsize = 10, esize = 15,
+  groups = my.groups,
+  theme = "colorblind",
+  legend = FALSE,
+  #label.color = "black",
+  fade = FALSE, # don't fade colors because they become impossible to see in Word
+  
            edge.labels  = TRUE, edge.label.cex = 3)
     mtext(text = paste0("Group ", g), line = 2.5)
   }

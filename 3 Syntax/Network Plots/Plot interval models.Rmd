@@ -27,17 +27,24 @@ plot_my_mgm <- function(my_mgm_fit){
   
   my_colorblind_edge_colors <- my_mgm_fit$pairwise$edgecolor_cb
   
-  set.seed(46)
+  set.seed(1)
+  
+  my.groups <- c(rep("Condition Assignment",1),rep("Outcome",3),rep("Process",3))
+                #list(1, 2:4, 5:7)
   
   return(qgraph(my_edgeweights, 
                 #layout = 'circle',
                 layout = 'spring', # Fruchterman-Reingold alg
-                repulsion = .61,
-                edge.label.cex = 2, # edge text size
+                repulsion = .47,
+                edge.label.cex = 0.75, # edge text size
                 edge.color = my_colorblind_edge_colors, 
                 legend.cex=.3, 
-                edge.labels = TRUE,
-                vsize = 3.5, esize = 15, labels = c('TX','HADS','IESR','CARS','SCS','EAC','AAQc')))
+                edge.labels = FALSE,
+                groups = my.groups,
+             theme = 'colorblind',
+                legend = FALSE,
+                vsize = 3.5, esize = 15, labels = #c('COND','HADS','IESR','CARS','SCS','EAC','AAQc'))
+                  c('ACT/\nMEUC','Anxiety','Trauma','Recur \nFear','Self-\nComp','EAC','Avoid')))
 }
   
 ```
@@ -60,12 +67,12 @@ PreTo6mFU.plot <- plot_my_mgm(PreTo6mFU.fit)
 
 
 qgraph::qgraph(PreToPost.plot, title.cex = 2, title = "", 
-               node.width = 3,
-               filetype = 'png', filename = here('Plots','Pre to Post Sample Network for Poster'))
+               node.width = 3,  edge.label.cex = 1, # edge text size
+               filetype = 'png', filename = here('Plots','Pre to Post Sample Network'))
 
 
 qgraph::qgraph(PreTo6mFU.plot, title.cex = 2, title = "", 
-               node.width = 1.75,
+               node.width = 3,  edge.label.cex = 1, # edge text size
                layout = PreToPost.plot$layout, # reuse plot from Pre-Post
                filetype = 'png', filename = here('Plots','Pre to 6m FU Sample Network'))
 
