@@ -1,0 +1,414 @@
+---
+title: "Estimate residualized change score network models"
+output:
+  pdf_document:
+    toc: yes
+  html_document:
+    toc: yes
+    toc_float: yes
+---
+
+This script runs network models with residualized change scores.
+
+# Read in the data and libraries
+
+```{r}
+
+knitr::opts_chunk$set(error = TRUE)
+
+library(tidyverse)
+library(mgm)
+library(qgraph)
+library(psych)
+library(corrr)
+library(here)
+
+``` 
+
+```{r}
+
+data_all_timepoints <- read_rds(file = here('4 Generated Datasets','Vars_At_All_Timepoints.rds'))
+
+```
+
+
+# Generic model functions
+
+
+## fit MGM functions
+```{r}
+
+fit_my_mgm <- function(my_data){
+  
+  set.seed(08132021)
+  fit_mgm <- mgm::mgm(data = my_data, 
+                      
+                      # first variable (condition) has 2 conditions, all others are continuous
+                      level = c(2,1,1,1,1,1,1), 
+                      
+                      # first variable (condition) is categorical, all others 
+                      # have assumed Gaussian normal ('g') distributions
+                      type = c("c","g","g","g","g","g","g"), 
+                      
+                      k =2,
+                      
+                      # ~~ test code to see if we can get signs for tx effect ~~
+                      binarySign = TRUE,
+                      
+                      # per Jonas set this way
+                      ruleReg = "OR")
+  
+  return(fit_mgm)
+  
+}
+
+fit_my_mgm.moderated <- function(my_data){
+  
+  # could examine just specific moderation effects
+  # as written, allows all edges to vary by condition
+  
+  set.seed(08132021)
+  fit_mgm <- mgm::mgm(data = my_data, 
+                      
+                      # first variable (condition) has 2 conditions, all others are continuous
+                      level = c(2,1,1,1,1,1,1), 
+                      
+                      # first variable (condition) is categorical, all others 
+                      # have assumed Gaussian normal ('g') distributions
+                      type = c("c","g","g","g","g","g","g"), 
+                      
+                      moderator = 1, #check syntax
+                      
+                      # per Jonas set this way
+                      ruleReg = "OR")
+  
+  return(fit_mgm)
+  
+}
+
+fit_my_boot_mgm <- function(fit, nB = 5000, myData){
+  
+  fit.boot <- resample(object = fit, 
+                               data = myData, 
+                               nB = nB)
+  
+  return(fit.boot)
+}
+
+```
+
+# Compute residualized change scores
+
+## Pre Post
+
+```{r}
+
+data.PrePost.wide <- 
+  data_all_timepoints %>%
+  
+  # not analyzing CESD so drop this variable
+  select(-CESD) %>% 
+  
+  # just Pre Post data
+  filter(timepoint %in% c(1,3)) %>%
+  
+  # reshape data
+  pivot_longer(cols = HADS.A:AAQc) %>%
+  pivot_wider(names_from = c('name','timepoint')) %>%
+  mutate(.rownames = as.character(c(1:nrow(.)))) %>%
+  relocate(.rownames) %>%
+  drop_na()  # drop incomplete cases since network analysis requires complete cases
+
+
+```
+
+### HADS.A
+
+```{r}
+
+HADS.A.PrePost.model <- lm(HADS.A_3 ~ HADS.A_1, data = data.PrePost.wide)
+
+HADS.A.PrePost.resid<- broom::augment(HADS.A.PrePost.model) %>%
+  pluck('.resid')
+
+```
+
+### IESR.Total
+
+```{r}
+
+IESR.Total.PrePost.model <- lm(IESR.Total_3 ~ IESR.Total_1, data = data.PrePost.wide)
+
+IESR.Total.PrePost.resid <- broom::augment(IESR.Total.PrePost.model) %>%
+  pluck('.resid')
+
+```
+
+### FCR
+
+```{r}
+
+FCR.PrePost.model <- lm(FCR_3 ~ FCR_1, data = data.PrePost.wide)
+
+FCR.PrePost.resid <- broom::augment(FCR.PrePost.model) %>%
+  pluck('.resid')
+
+```
+
+
+### SCS
+
+```{r}
+
+SCS.PrePost.model <- lm(SCS_3 ~ SCS_1, data = data.PrePost.wide)
+
+SCS.PrePost.resid<- broom::augment(SCS.PrePost.model) %>%
+  pluck('.resid')
+
+```
+
+### EAC Total
+
+```{r}
+
+EAC.Total.PrePost.model <- lm(EAC.Total_3 ~ EAC.Total_1, data = data.PrePost.wide)
+
+EAC.Total.PrePost.resid<- broom::augment(EAC.Total.PrePost.model) %>%
+  pluck('.resid')
+
+```
+
+### AAQc 
+
+```{r}
+
+AAQc.PrePost.model <- lm(AAQc_3 ~ AAQc_1, data = data.PrePost.wide)
+
+AAQc.PrePost.resid<- broom::augment(AAQc.PrePost.model) %>%
+  pluck('.resid')
+
+```
+
+
+### Create combined dataset
+
+```{r}
+
+residualized.PrePost.matrix<- 
+  tibble(data.PrePost.wide %>% select(Condition_Dummy),
+         HADS.A.PrePost.resid,
+         IESR.Total.PrePost.resid,
+         FCR.PrePost.resid,
+         SCS.PrePost.resid,
+         EAC.Total.PrePost.resid,
+         AAQc.PrePost.resid) %>%
+  as.matrix()
+
+```
+
+
+## Pre FU
+
+```{r}
+
+data.PreFU.wide <- 
+  data_all_timepoints %>%
+  
+  # not analyzing CESD so drop this variable
+  select(-CESD) %>% 
+  
+  # just Pre Post data
+  filter(timepoint %in% c(1,5)) %>%
+  
+  # reshape data
+  pivot_longer(cols = HADS.A:AAQc) %>%
+  pivot_wider(names_from = c('name','timepoint')) %>%
+  mutate(.rownames = as.character(c(1:nrow(.)))) %>%
+  relocate(.rownames) %>%
+  drop_na()  # drop incomplete cases since network analysis requires complete cases
+
+
+```
+
+### HADS.A
+
+```{r}
+
+HADS.A.PreFU.model <- lm(HADS.A_5 ~ HADS.A_1, data = data.PreFU.wide)
+
+HADS.A.PreFU.resid<- broom::augment(HADS.A.PreFU.model) %>%
+  pluck('.resid')
+
+```
+
+### IESR.Total
+
+```{r}
+
+IESR.Total.PreFU.model <- lm(IESR.Total_5 ~ IESR.Total_1, data = data.PreFU.wide)
+
+IESR.Total.PreFU.resid <- broom::augment(IESR.Total.PreFU.model) %>%
+  pluck('.resid')
+
+```
+
+### FCR
+
+```{r}
+
+FCR.PreFU.model <- lm(FCR_5 ~ FCR_1, data = data.PreFU.wide)
+
+FCR.PreFU.resid <- broom::augment(FCR.PreFU.model) %>%
+  pluck('.resid')
+
+```
+
+
+### SCS
+
+```{r}
+
+SCS.PreFU.model <- lm(SCS_5 ~ SCS_1, data = data.PreFU.wide)
+
+SCS.PreFU.resid<- broom::augment(SCS.PreFU.model) %>%
+  pluck('.resid')
+
+```
+
+### EAC Total
+
+```{r}
+
+EAC.Total.PreFU.model <- lm(EAC.Total_5 ~ EAC.Total_1, data = data.PreFU.wide)
+
+EAC.Total.PreFU.resid<- broom::augment(EAC.Total.PreFU.model) %>%
+  pluck('.resid')
+
+```
+
+### AAQc 
+
+```{r}
+
+AAQc.PreFU.model <- lm(AAQc_5 ~ AAQc_1, data = data.PreFU.wide)
+
+AAQc.PreFU.resid<- broom::augment(AAQc.PreFU.model) %>%
+  pluck('.resid')
+
+```
+
+
+### Create combined dataset
+
+```{r}
+
+residualized.PreFU.matrix<- 
+  tibble(data.PreFU.wide %>% select(Condition_Dummy),
+         HADS.A.PreFU.resid,
+         IESR.Total.PreFU.resid,
+         FCR.PreFU.resid,
+         SCS.PreFU.resid,
+         EAC.Total.PreFU.resid,
+         AAQc.PreFU.resid) %>%
+  as.matrix()
+
+```
+# Fit network models
+
+```{r}
+
+PrePost.residualized.fit<- fit_my_mgm(residualized.PrePost.matrix)
+
+write_rds(x = PrePost.residualized.fit , file = here('Fitted model objects',
+                                          'Residual Networks',
+                                          'Nonmoderated',
+                                          'Nonbootstrapped',
+                                          'PrePost.residualized.fit'))
+
+PreFU.residualized.fit<- fit_my_mgm(residualized.PreFU.matrix)
+
+write_rds(x = PreFU.residualized.fit , file = here('Fitted model objects',
+                                          'Residual Networks',
+                                          'Nonmoderated',
+                                          'Nonbootstrapped',
+                                          'PreFU.residualized.fit'))
+
+```
+
+# Bootstrap
+
+## Pre-Post
+
+NEED TO CHECK THAT THIS WORKS
+
+```{r}
+
+PrePost.fit.boot <- fit_my_boot_mgm(PrePost.residualized.fit, nB = 5000, myData = residualized.PreFU.matrix)
+
+```
+
+# Plot
+
+## hardcoded layout from the original difference score models
+
+```{r}
+
+best_layout <-matrix(
+  c(
+    -0.01058774, -1.00000000, -0.75129002,  0.80844598,  1.00000000, -0.15968250,  0.16730796, 
+    0.06435805,  0.26700354, -0.70058357,  0.52548735, -0.46997918,  1.00000000, -1.00000000),
+  nrow = 7, ncol = 2)
+
+```
+
+## generic function to plot MGM
+```{r}
+
+plot_my_mgm <- function(my_mgm_fit){
+  
+  my_edgeweights <- my_mgm_fit$pairwise$wadj
+  
+  my_colorblind_edge_colors <- my_mgm_fit$pairwise$edgecolor_cb
+  
+  set.seed(1)
+  
+  my.groups <- c(rep("Condition Assignment",1),rep("Outcome",3),rep("Process",3))
+                #list(1, 2:4, 5:7)
+  
+  return(qgraph(my_edgeweights, 
+                #layout = 'circle',
+                layout = 'spring', # Fruchterman-Reingold alg
+                repulsion = .47,
+                edge.label.cex = 0.75, # edge text size
+                edge.color = my_colorblind_edge_colors, 
+                legend.cex=.3, 
+                edge.labels = FALSE,
+                groups = my.groups,
+             theme = 'colorblind',
+                legend = FALSE,
+                vsize = 3.5, esize = 15, labels = #c('COND','HADS','IESR','CARS','SCS','EAC','AAQc'))
+                  c('ACT/\nMEUC','Anxiety','Trauma','Recur \nFear','Self-\nComp','EAC','Avoid')))
+}
+  
+```
+
+```{r}
+PreToPost.resid.plot <- plot_my_mgm(PrePost.residualized.fit)
+
+qgraph::qgraph(PreToPost.resid.plot, title.cex = 2, title = "", 
+               node.width = 3,  edge.label.cex = 1, # edge text size
+                layout = best_layout,
+               filetype = 'png', filename = here('Plots','Pre to Post Residual Sample Network'))
+
+```
+
+
+```{r}
+PreToFU.resid.plot <- plot_my_mgm(PreFU.residualized.fit)
+
+qgraph::qgraph(PreToFU.resid.plot, title.cex = 2, title = "", 
+               node.width = 3,  edge.label.cex = 1, # edge text size
+                layout = best_layout,
+               filetype = 'png', filename = here('Plots','Pre to FU Residual Sample Network'))
+
+```
