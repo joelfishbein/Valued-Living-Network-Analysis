@@ -58,6 +58,10 @@ plot_my_mgm <- function(my_mgm_fit){
 PreToPost.plot <- plot_my_mgm(PreToPost.fit)
 PreTo6mFU.plot <- plot_my_mgm(PreTo6mFU.fit)
 
+plot_my_mgm(PreToPost.fit)
+
+
+
 ```
 
 
