@@ -13,10 +13,32 @@ library(tidyverse)
 library(here)
 library(qgraph)
 
-PreToPost.fit <- read_rds(here('Fitted model objects','Nonmoderated','Nonbootstrapped','PreToPost.fit'))
-PreTo6mFU.fit <- read_rds(here('Fitted model objects','Nonmoderated','Nonbootstrapped','PreTo6mFU.fit'))
+PreToPost.Diffscore.fit <- read_rds(here('Fitted model objects','Nonmoderated','Nonbootstrapped','PreToPost.fit'))
+PreTo6mFU.Diffscore.fit <- read_rds(here('Fitted model objects','Nonmoderated','Nonbootstrapped','PreTo6mFU.fit'))
+
+PreToPost.Residualized.fit <- read_rds(
+  here('Fitted model objects/Residual Networks/Nonmoderated/Nonbootstrapped',
+       'PrePost.residualized.fit'))
+
+PreToFU.Residualized.fit <- read_rds(
+  here('Fitted model objects/Residual Networks/Nonmoderated/Nonbootstrapped',
+       'PreFU.residualized.fit'))
+
+
 ```
 
+
+# Hardcoded layout
+
+This is the saved layout from the difference score Pre Post network model based on the parameters passed in. This layout looks quite good for the variables of interest to us and it's helpful to display all the networks on the same layout. So for simplicity I've just hardcoded in the values here.
+
+```{r}
+
+best_layout <-matrix(
+  c( -0.01058774, -1.00000000, -0.75129002,  0.80844598,  1.00000000, -0.15968250,  0.16730796, 0.06435805,  0.26700354, -0.70058357,  0.52548735, -0.46997918,  1.00000000, -1.00000000),
+  nrow = 7, ncol = 2)
+
+```
 
 ## generic function to plot MGM
 ```{r}
@@ -49,17 +71,14 @@ plot_my_mgm <- function(my_mgm_fit){
   
 ```
 
-# Create interval plots
+# Difference Score Plots
 
 ## generate plot but don't save yet
 
 ```{r}
 
-PreToPost.plot <- plot_my_mgm(PreToPost.fit)
-PreTo6mFU.plot <- plot_my_mgm(PreTo6mFU.fit)
-
-plot_my_mgm(PreToPost.fit)
-
+PreToPost.Diffscore.plot <- plot_my_mgm(PreToPost.Diffscore.fit)
+PreTo6mFU.Diffscore.plot <- plot_my_mgm(PreTo6mFU.Diffscore.fit)
 
 
 ```
@@ -70,15 +89,53 @@ plot_my_mgm(PreToPost.fit)
 ```{r}
 
 
-qgraph::qgraph(PreToPost.plot, title.cex = 2, title = "", 
+qgraph::qgraph(PreToPost.Diffscore.plot, title.cex = 2, title = "", 
                node.width = 3,  edge.label.cex = 1, # edge text size
-               filetype = 'png', filename = here('Plots','Pre to Post Sample Network'))
+               filetype = 'png', filename = here('Plots','Pre to Post Difference Score Sample Network'))
 
 
-qgraph::qgraph(PreTo6mFU.plot, title.cex = 2, title = "", 
+qgraph::qgraph(PreTo6mFU.Diffscore.plot, title.cex = 2, title = "", 
                node.width = 3,  edge.label.cex = 1, # edge text size
-               layout = PreToPost.plot$layout, # reuse plot from Pre-Post
-               filetype = 'png', filename = here('Plots','Pre to 6m FU Sample Network'))
+               layout = best_layout, # reuse plot from Pre-Post
+               filetype = 'png', filename = here('Plots','Pre to FU Difference Score Sample Network'))
 
 
 ```
+
+
+
+
+
+# Residualized Change Score Plots
+
+## generate plot but don't save yet
+
+```{r}
+
+PreToPost.Residualized.plot <- plot_my_mgm(PreToPost.Residualized.fit)
+PreTo6mFU.Residualized.plot <- plot_my_mgm(PreToFU.Residualized.fit)
+
+
+```
+
+
+## Output plots for each interval
+
+```{r}
+
+
+qgraph::qgraph(PreToPost.Residualized.plot, title.cex = 2, title = "", 
+               node.width = 3,  edge.label.cex = 1, # edge text size
+               layout = best_layout, 
+               filetype = 'png', filename = here('Plots','Pre to Post Residualized Score Sample Network'))
+
+
+qgraph::qgraph(PreTo6mFU.Residualized.plot, title.cex = 2, title = "", 
+               node.width = 3,  edge.label.cex = 1, # edge text size
+               layout = best_layout, 
+               filetype = 'png', filename = here('Plots','Pre to FU Residualized Score Sample Network'))
+
+
+```
+
+
