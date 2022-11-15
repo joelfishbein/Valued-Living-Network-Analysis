@@ -194,15 +194,29 @@ AAQc.PrePost.resid<- broom::augment(AAQc.PrePost.model) %>%
 
 ```{r}
 
-residualized.PrePost.matrix<- 
+residualized.PrePost.tibble<- 
   tibble(data.PrePost.wide %>% select(Condition_Dummy),
          HADS.A.PrePost.resid,
          IESR.Total.PrePost.resid,
          FCR.PrePost.resid,
          SCS.PrePost.resid,
          EAC.Total.PrePost.resid,
-         AAQc.PrePost.resid) %>%
+         AAQc.PrePost.resid) 
+
+residualized.PrePost.matrix <- 
+  residualized.PrePost.tibble %>%
   as.matrix()
+
+
+
+```
+
+## Save tibble for use in the standard mediation models
+
+```{r}
+
+write_rds(x = residualized.PrePost.tibble, file = here('4 Generated Datasets',
+                                          'residualized.PrePost.tibble'))
 
 ```
 
@@ -302,17 +316,30 @@ AAQc.PreFU.resid<- broom::augment(AAQc.PreFU.model) %>%
 
 ```{r}
 
-residualized.PreFU.matrix<- 
+residualized.PreFU.tibble<- 
   tibble(data.PreFU.wide %>% select(Condition_Dummy),
          HADS.A.PreFU.resid,
          IESR.Total.PreFU.resid,
          FCR.PreFU.resid,
          SCS.PreFU.resid,
          EAC.Total.PreFU.resid,
-         AAQc.PreFU.resid) %>%
+         AAQc.PreFU.resid) 
+
+residualized.PreFU.matrix<-
+  residualized.PreFU.tibble %>%
   as.matrix()
 
 ```
+
+## Save tibble for use in the standard mediation models
+
+```{r}
+
+write_rds(x = residualized.PreFU.tibble, file = here('4 Generated Datasets',
+                                          'residualized.PreFU.tibble'))
+
+```
+
 # Fit unmoderated network models
 
 ## Pre-Post
