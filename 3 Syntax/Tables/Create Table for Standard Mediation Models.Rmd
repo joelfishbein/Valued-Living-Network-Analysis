@@ -16,7 +16,8 @@ library(here)
 library(kableExtra)
 
 
-load(file = here('4 Generated Datasets', 'PrePost_mediation_models_difference_score_May30.RData'))
+#load(file = here('4 Generated Datasets', 'PrePost_mediation_models_difference_score_May30.RData'))
+load(file = here('4 Generated Datasets', 'PrePost_mediation_models_residualized.RData'))
 # drop the functions so that the mapping works
 
 ```
@@ -156,4 +157,10 @@ knitr::kable(my_estimates_table,
                      "c' path" = 3 , 
                      "ab" = 3)) 
 
+```
+
+
+```{r}
+
+summary(SCS_FCR_contemporaneous.fit)
 ```
