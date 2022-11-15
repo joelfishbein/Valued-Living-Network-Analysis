@@ -313,7 +313,9 @@ residualized.PreFU.matrix<-
   as.matrix()
 
 ```
-# Fit network models
+# Fit unmoderated network models
+
+## Pre-Post
 
 ```{r}
 
@@ -325,6 +327,12 @@ write_rds(x = PrePost.residualized.fit , file = here('Fitted model objects',
                                           'Nonbootstrapped',
                                           'PrePost.residualized.fit'))
 
+```
+
+## Pre-FU
+
+```{r}
+
 PreFU.residualized.fit<- fit_my_mgm(residualized.PreFU.matrix)
 
 write_rds(x = PreFU.residualized.fit , file = here('Fitted model objects',
@@ -335,80 +343,135 @@ write_rds(x = PreFU.residualized.fit , file = here('Fitted model objects',
 
 ```
 
-# Bootstrap
+
+
+# Fit moderated network models
 
 ## Pre-Post
 
-NEED TO CHECK THAT THIS WORKS
-
 ```{r}
 
-PrePost.fit.boot <- fit_my_boot_mgm(PrePost.residualized.fit, nB = 5000, myData = residualized.PreFU.matrix)
+PrePost.moderated.residualized.fit<- fit_my_mgm.moderated(residualized.PrePost.matrix)
+
+write_rds(x = PrePost.residualized.fit , file = here('Fitted model objects',
+                                          'Residual Networks',
+                                          'Moderated',
+                                          'Nonbootstrapped',
+                                          'PrePost.moderated.residualized.fit'))
 
 ```
 
-# Plot
-
-## hardcoded layout from the original difference score models
+## Pre-FU
 
 ```{r}
 
-best_layout <-matrix(
-  c(
-    -0.01058774, -1.00000000, -0.75129002,  0.80844598,  1.00000000, -0.15968250,  0.16730796, 
-    0.06435805,  0.26700354, -0.70058357,  0.52548735, -0.46997918,  1.00000000, -1.00000000),
-  nrow = 7, ncol = 2)
+PreFU.moderated.residualized.fit<- fit_my_mgm.moderated(residualized.PreFU.matrix)
+
+write_rds(x = PreFU.residualized.fit , file = here('Fitted model objects',
+                                          'Residual Networks',
+                                          'Moderated',
+                                          'Nonbootstrapped',
+                                          'PreFU.moderated.residualized.fit'))
 
 ```
 
-## generic function to plot MGM
+# Bootstrap
+
+```{r}
+set.seed(08132021)
+
+```
+
+## Pre-Post
+
+
 ```{r}
 
-plot_my_mgm <- function(my_mgm_fit){
-  
-  my_edgeweights <- my_mgm_fit$pairwise$wadj
-  
-  my_colorblind_edge_colors <- my_mgm_fit$pairwise$edgecolor_cb
-  
-  set.seed(1)
-  
-  my.groups <- c(rep("Condition Assignment",1),rep("Outcome",3),rep("Process",3))
-                #list(1, 2:4, 5:7)
-  
-  return(qgraph(my_edgeweights, 
-                #layout = 'circle',
-                layout = 'spring', # Fruchterman-Reingold alg
-                repulsion = .47,
-                edge.label.cex = 0.75, # edge text size
-                edge.color = my_colorblind_edge_colors, 
-                legend.cex=.3, 
-                edge.labels = FALSE,
-                groups = my.groups,
-             theme = 'colorblind',
-                legend = FALSE,
-                vsize = 3.5, esize = 15, labels = #c('COND','HADS','IESR','CARS','SCS','EAC','AAQc'))
-                  c('ACT/\nMEUC','Anxiety','Trauma','Recur \nFear','Self-\nComp','EAC','Avoid')))
-}
-  
+PrePost.fit.boot <- fit_my_boot_mgm(PrePost.residualized.fit, 
+                                    nB = 5000, 
+                                    myData = residualized.PrePost.matrix)
+
+write_rds(x = PrePost.fit.boot , file = here('Fitted model objects',
+                                          'Residual Networks',
+                                          'Nonmoderated',
+                                          'Bootstrapped',
+                                          'PrePost.residualized.boot.fit'))
+
 ```
 
 ```{r}
-PreToPost.resid.plot <- plot_my_mgm(PrePost.residualized.fit)
 
-qgraph::qgraph(PreToPost.resid.plot, title.cex = 2, title = "", 
-               node.width = 3,  edge.label.cex = 1, # edge text size
-                layout = best_layout,
-               filetype = 'png', filename = here('Plots','Pre to Post Residual Sample Network'))
+PreFU.fit.boot <- fit_my_boot_mgm(PreFU.residualized.fit, 
+                                  nB = 5000, 
+                                  myData = residualized.PreFU.matrix)
+
+write_rds(x = PreFU.fit.boot , file = here('Fitted model objects',
+                                          'Residual Networks',
+                                          'Nonmoderated',
+                                          'Bootstrapped',
+                                          'PreFU.residualized.boot.fit'))
 
 ```
 
 
-```{r}
-PreToFU.resid.plot <- plot_my_mgm(PreFU.residualized.fit)
+# Bootstrap
 
-qgraph::qgraph(PreToFU.resid.plot, title.cex = 2, title = "", 
-               node.width = 3,  edge.label.cex = 1, # edge text size
-                layout = best_layout,
-               filetype = 'png', filename = here('Plots','Pre to FU Residual Sample Network'))
+```{r}
+set.seed(08132021)
 
 ```
+
+## Pre-Post
+
+### Non moderated
+
+```{r}
+
+PrePost.fit.boot <- fit_my_boot_mgm(PrePost.residualized.fit, 
+                                    nB = 5000, 
+                                    myData = residualized.PrePost.matrix)
+
+write_rds(x = PrePost.fit.boot , file = here('Fitted model objects',
+                                          'Residual Networks',
+                                          'Nonmoderated',
+                                          'Bootstrapped',
+                                          'PrePost.residualized.boot.fit'))
+
+
+
+```
+
+```{r}
+
+PreFU.fit.boot <- fit_my_boot_mgm(PreFU.residualized.fit, 
+                                  nB = 5000, 
+                                  myData = residualized.PreFU.matrix)
+
+write_rds(x = PreFU.fit.boot , file = here('Fitted model objects',
+                                          'Residual Networks',
+                                          'Nonmoderated',
+                                          'Bootstrapped',
+                                          'PreFU.residualized.boot.fit'))
+
+```
+
+
+
+
+### Moderated
+
+```{r}
+
+# PrePost.moderated.fit.boot <- fit_my_boot_mgm(PrePost.moderated.residualized.fit,
+#                                     nB = 3,
+#                                     myData = residualized.PrePost.matrix)
+# 
+# write_rds(x = PrePost.moderated.fit.boot , file = here('Fitted model objects',
+#                                           'Residual Networks',
+#                                           'Moderated',
+#                                           'Bootstrapped',
+#                                           'PrePost.moderated.residualized.boot.fit'))
+
+```
+
+
