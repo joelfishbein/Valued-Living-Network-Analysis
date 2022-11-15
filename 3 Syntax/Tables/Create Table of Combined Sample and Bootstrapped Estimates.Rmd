@@ -4,20 +4,49 @@ output: html_notebook
 ---
 
 
-# Read data
+# Read in libraries
 
 ```{r}
 library(tidyverse)
 library(kableExtra)
 library(here)
 
-PreToPost.fit.no_boot <- read_rds(here('Fitted model objects','Nonmoderated','Nonbootstrapped','PreToPost.fit'))
+```
 
-PreToPost.fit.boot <- read_rds(here('Fitted model objects','PreToPost.fit.boot'))
+# Read in model fits
 
-PreTo6mFU.fit.no_boot <- read_rds(here('Fitted model objects','Nonmoderated','Nonbootstrapped','PreTo6mFU.fit'))
+## Difference score network model fits
 
-PreTo6mFU.fit.boot <- read_rds(here('Fitted model objects','PreTo6mFU.fit.boot'))
+Uncomment this section and comment next section to create table with difference score models
+
+```{r}
+
+# PreToPost.fit.no_boot <- read_rds(here('Fitted model objects','Nonmoderated','Nonbootstrapped','PreToPost.fit'))
+# 
+# PreToPost.fit.boot <- read_rds(here('Fitted model objects','PreToPost.fit.boot'))
+# 
+# PreTo6mFU.fit.no_boot <- read_rds(here('Fitted model objects','Nonmoderated','Nonbootstrapped','PreTo6mFU.fit'))
+# 
+# PreTo6mFU.fit.boot <- read_rds(here('Fitted model objects','PreTo6mFU.fit.boot'))
+
+
+```
+
+## Residualized change score network model fits
+
+Uncomment this section and comment next section to create table with difference score models
+```{r}
+
+PreToPost.fit.no_boot <- read_rds(here('Fitted model objects','Residual Networks','Nonmoderated','Nonbootstrapped','PrePost.residualized.fit'))
+
+PreToPost.fit.boot <- read_rds(here('Fitted model objects','Residual Networks','Nonmoderated','Bootstrapped','PrePost.residualized.boot.fit'))
+
+PreTo6mFU.fit.no_boot <- read_rds(here('Fitted model objects','Residual Networks','Nonmoderated','Nonbootstrapped','PreFU.residualized.fit'))
+
+PreTo6mFU.fit.boot <- read_rds(here('Fitted model objects','Residual Networks','Nonmoderated','Bootstrapped','PreFU.residualized.boot.fit'))
+
+
+
 
 ```
 
