@@ -15,8 +15,16 @@ library(mgm)
 library(qgraph)
 
 
-PreToPost.fit <- read_rds(here('Fitted model objects','Moderated','Not bootstrapped','PreToPost.moderated.fit'))
-PreTo6mFU.fit <- read_rds(here('Fitted model objects','Moderated','Not bootstrapped','PreTo6mFU.moderated.fit'))
+PreToPost.fit <- read_rds(here('Fitted model objects',
+                               'Residual Networks',
+                               'Moderated',
+                               'Nonbootstrapped',
+                               'PrePost.moderated.residualized.fit'))
+PreTo6mFU.fit <- read_rds(here('Fitted model objects',
+                               'Residual Networks',
+                               'Moderated',
+                               'Nonbootstrapped',
+                               'PreFU.moderated.residualized.fit'))
 
 data_all_timepoints <- read_rds(file = here('4 Generated Datasets','Vars_At_All_Timepoints.rds'))
 
@@ -48,7 +56,7 @@ plotModeratedNetworkModel <- function(fit){
   for(g in 1:2) {
     qgraph(input = l_mgm_cond[[g]]$pairwise$wadj, 
            edge.color = l_mgm_cond[[g]]$pairwise$edgecolor_cb,
-           labels =  c( 'TX', 'HADS','IESR', 'CARS', 'SCS', 'EAC', 'AAQc'),
+           labels =  c('ACT/\nMEUC','Anxiety','Trauma','Recur \nFear','Self-\nComp','EAC','Avoid'),
           # lty = l_mgm_cond[[g]]$pairwise$edge_lty, #  dashed versus solid lines by sign of edge
            layout = "circle",
              repulsion = 1.3,
@@ -74,7 +82,7 @@ plotModeratedNetworkModel <- function(fit){
 
 ```{r}
 
-png(file = here('Plots/Moderated Pre to Post a.png'), width = 7, height = 4, units = "in", res = 300)
+png(file = here('Plots/Moderated Pre to Post.png'), width = 7, height = 4, units = "in", res = 300)
 plotModeratedNetworkModel(PreToPost.fit)
 
 
@@ -85,7 +93,7 @@ plotModeratedNetworkModel(PreToPost.fit)
 
 ```{r}
 
-png(file = here('Plots/Moderated Pre to 6m ab.png'), width = 7, height = 4, units = "in", res = 300)
+png(file = here('Plots/Moderated Pre to FU.png'), width = 7, height = 4, units = "in", res = 300)
 plotModeratedNetworkModel(PreTo6mFU.fit)
 dev.off()
 
