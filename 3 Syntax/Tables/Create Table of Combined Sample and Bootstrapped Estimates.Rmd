@@ -1,8 +1,10 @@
 ---
-title: "R Notebook"
+title: "Create Table of Combined Sample and Bootstrap Estimates"
+author: Joel N Fishbein
 output: html_notebook
 ---
 
+Generates Table 2 and Supplemental Table A1
 
 # Read in libraries
 
@@ -108,7 +110,7 @@ getTidyAdjacencyMatrix <- function(mgm_fit){
 
 # Function for obtaining estimates and quantiles
 
-Uses part of https://github.com/cran/mgm/blob/master/R/plotRes.R
+Adapts https://github.com/cran/mgm/blob/master/R/plotRes.R
 ```{r}
 
 
@@ -124,8 +126,8 @@ getBootEstimates <- function(object){
     n_pars <- p*(p-1) / 2
     
     # Collapse into edge x property matrix
-    tar_mat <- matrix(NA, nrow=n_pars, ncol = 6)
-    colnames(tar_mat) <- c("Variable A", "Variable B", "Mean", "qtl_low", "qtl_high", "propLtZ")
+    tar_mat <- matrix(NA, nrow=n_pars, ncol = 7)
+    colnames(tar_mat) <- c("Variable A", "Variable B", "Mean", "qtl_low", "qtl_high", "propGreaterThanZero", "propLessThanZero")
     
     counter <- 1
     for(row in 1:p) {
@@ -141,7 +143,8 @@ getBootEstimates <- function(object){
           tar_mat[counter, 3] <- mean(object$bootParameters[row, col, ])
           tar_mat[counter, 4] <- qtls[1]
           tar_mat[counter, 5] <- qtls[2]
-          tar_mat[counter, 6] <- mean(abs(object$bootParameters[row, col, ]) > 0) # proportion estimates > 0
+          tar_mat[counter, 6] <- mean(object$bootParameters[row, col, ] > 0) # proportion estimates > 0
+          tar_mat[counter, 7] <- mean(object$bootParameters[row, col, ] < 0) # proportion estimates < 0
           
           # update counter
           counter <- counter + 1
@@ -174,7 +177,16 @@ getBootEstimates <- function(object){
       rename(`Mean Boot Estimate of Edge Weight` = Mean,
             `Boot 5%` = qtl_low,
              `Boot 95%` = qtl_high,
-             `Bootstrap Stability %` = propLtZ)
+             `Greater Than Zero %` = propGreaterThanZero, 
+            `Less Than Zero %` = propLessThanZero) %>%
+      
+      
+      # for stability, we want to see % boot samples with edge being nonzero and in same direction as boot estimate
+      # boot estimate and sample estimate have same direction in all cases (or sample estimate is 0)
+      # thus, use direction of boot estimate here to dictate which % is stored for display as Stability %
+      mutate(`Bootstrap Stability %` = ifelse(`Mean Boot Estimate of Edge Weight` > 0,
+                                              `Greater Than Zero %`, 
+                                              `Less Than Zero %`))
     
     return(EdgeWeights)
     
@@ -217,6 +229,7 @@ getEdgeType <- function(var_name_1, var_name_2){
 }
 
 ```
+
 
 # Combine non boot and boot models
 
@@ -261,19 +274,20 @@ getCombinedNonBootandBootEstimates <- function(model.no_boot.fit, model.boot.fit
     
     mutate(across(is.numeric, ~round(.x,2))) %>%
     
-    mutate(`Boostrap Mean [95% CI] Estimate` = str_c(`Mean Boot Estimate of Edge Weight`, 
+    mutate(`Boostrap Mean [95% Quantile] Estimate` = str_c(`Mean Boot Estimate of Edge Weight`, 
                                                      ' [',
                                                      `Boot 5%`,
                                                      ', ',
                                                      `Boot 95%`,
                                                      ']')) %>%
     
-    relocate(`Boostrap Mean [95% CI] Estimate`, .after = `Sample Estimate`) %>%
+    relocate(`Boostrap Mean [95% Quantile] Estimate`, .after = `Sample Estimate`) %>%
     
     # make this into a percentage
-    mutate(`Bootstrap Stability %` = `Bootstrap Stability %`* 100) %>%
+    mutate(`Inclusion %` = `Bootstrap Stability %`* 100) %>%
     
-    select(-`Mean Boot Estimate of Edge Weight`,-`Boot 5%`,-`Boot 95%`)
+    select(-`Mean Boot Estimate of Edge Weight`,-`Boot 5%`,-`Boot 95%`, -`Bootstrap Stability %`,
+            -`Greater Than Zero %`, -`Less Than Zero %`)
   
 }
 
@@ -306,23 +320,18 @@ PreTo6mFU.estimates.boot <- getBootEstimates(PreTo6mFU.fit.boot)
 PreToPost.table <- getCombinedNonBootandBootEstimates(PreToPost.fit.no_boot, PreToPost.fit.boot)
 PreTo6mFU.table <- getCombinedNonBootandBootEstimates(PreTo6mFU.fit.no_boot, PreTo6mFU.fit.boot)
 
-combined.table <- left_join(PreToPost.table, PreTo6mFU.table, by = c("Variable 1", "Variable 2"))
 ```
-
 
 # Print
 
+```{r}
+
+PreToPost.table
+
+```
 
 ```{r}
-combined.table %>%
-  select(-Type.x, -Type.y) %>%
-  kable(col.names = c('Variable 1','Variable 2', 
-                      rep(c('Sample Estimate','Bootstrap Mean [95% CI] Estimate', 'Nonzero %'),2))) %>%
-  
-  kableExtra::kable_classic(html_font = 'Times New Roman', full_width = FALSE) %>%
-  kableExtra::add_header_above(c("Edge Definition " = 2, "Pre to Post" = 3, "Pre to 6M FU" = 3)) %>%
-  kableExtra::group_rows(start_row = 1, end_row = 6, group_label = 'Intervention Effects') %>%
-  kableExtra::group_rows(start_row = 7, end_row = 9, group_label = 'Process Variable Associations') %>%
-  kableExtra::group_rows(start_row = 10, end_row = 12, group_label = 'Outcome Variable Associations') %>%
-  kableExtra::group_rows(start_row = 13, end_row = 21, group_label = 'Process-Outcome Associations') 
+
+PreTo6mFU.table
+
 ```
