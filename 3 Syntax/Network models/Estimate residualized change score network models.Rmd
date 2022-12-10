@@ -1,11 +1,6 @@
 ---
 title: "Estimate residualized change score network models"
-output:
-  pdf_document:
-    toc: yes
-  html_document:
-    toc: yes
-    toc_float: yes
+author: Joel N Fishbein
 ---
 
 This script runs network models with residualized change scores.
