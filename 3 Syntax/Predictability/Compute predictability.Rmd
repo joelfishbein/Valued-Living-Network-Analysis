@@ -15,12 +15,12 @@ library(kableExtra)
 library(here)
 library(mgm)
 
-PreToPost.fit <- read_rds(here('Fitted model objects','Nonmoderated','Nonbootstrapped','PreToPost.fit'))
+PreToPost.fit <- read_rds(here('Fitted model objects','Residual Networks','Nonmoderated','Nonbootstrapped','PrePost.residualized.fit'))
 
-PreTo6mFU.fit <- read_rds(here('Fitted model objects','Nonmoderated','Nonbootstrapped','PreTo6mFU.fit'))
+PreTo6mFU.fit <- read_rds(here('Fitted model objects','Residual Networks','Nonmoderated','Nonbootstrapped','PreFU.residualized.fit'))
 
-PreToPost.data <- read_rds(file = here('4 Generated Datasets','PreToPost.data.rds'))
-PreTo6MFU.data <- read_rds(file = here('4 Generated Datasets','PreTo6MFU.data.rds'))
+PreToPost.data <- read_rds(file = here('4 Generated Datasets','residualized.PrePost.tibble'))
+PreTo6MFU.data <- read_rds(file = here('4 Generated Datasets','residualized.PreFU.tibble'))
 
 ```
 
