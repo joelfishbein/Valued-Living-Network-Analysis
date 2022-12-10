@@ -15,7 +15,7 @@ library(psych)
 library(corrr)
 library(here)
 
-``` 
+```
 
 ```{r}
 
@@ -45,49 +45,39 @@ data.PrePostFU.long <-
 
 ```
 
-HADS – M (SD)
-CARS– M (SD)
-IES-R– M (SD)
-AAQc – M (SD)
-SCS – M (SD)
-
-
-
 ```{r}
 
-plot <- data.PrePostFU.long %>%
-  mutate(Condition = ifelse(Condition_Dummy == 0, "MEUC", "ACT"),
+means_plot <- data.PrePost.long %>%
+  
+    mutate(Condition = ifelse(Condition_Dummy == 0, "MEUC", "ACT"),
          instrument = str_replace_all(instrument, pattern = c(
            "EAC.Total" = "EAC",
            "IESR.Total" = "IES-R",
            "HADS.A" = "HADS"))) %>%
-  
-  ungroup() %>%
+
   mutate(Timepoint = as_factor(
     ifelse(timepoint == 1, "Pre",
            ifelse(timepoint == 3, "Post", "FU")))) %>%
-  group_by(instrument, Timepoint,Condition) %>%
-  summarize(mean = mean(value),
-            sd = sd(value)) %>%
   
-  ggplot(aes(x = Timepoint, color = Condition)) +
-  geom_point(aes(y = mean)) +
-  geom_line(aes(y = mean)) +
-  geom_errorbar(aes(ymin=mean-sd, 
-                    ymax=mean+sd)) +
+  ggplot(aes(x = Timepoint, y = value, group = Condition, color = Condition)) +
+  stat_summary(geom = "point", fun = "mean") +
+  stat_summary(geom = "line", fun = "mean") +
+  stat_summary(fun.data = "mean_cl_normal", geom = "errorbar", width = .15) +
   theme_minimal() +
   ylab('') +
+  xlab('') +
   
   facet_wrap(facet = vars(instrument), nrow = 3, ncol = 2, scales = "free")
+  
+means_plot
 
 
-plot
 ```
-
-
 
 
 ```{r}
-ggsave(filename = here('5 Tables and Figures', "Pre Mid Post Means and SDs Plot.jpg"), units = "in", width = 4, height = 6, dpi = 300)
+ggsave(plot = means_plot, filename = here('5 Tables and Figures', "Pre Mid Post Means and 95 CIs Plot.jpg"), units = "in", width = 4, height = 6, dpi = 300)
 
 ```
+
+
