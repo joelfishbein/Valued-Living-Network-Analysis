@@ -1,6 +1,6 @@
 ---
-title: "Estimate residualized change score network models"
-author: Joel N Fishbein
+author: Joel N. Fishbein, M.A.
+date: December 11, 2022
 ---
 
 This script runs network models with residualized change scores.

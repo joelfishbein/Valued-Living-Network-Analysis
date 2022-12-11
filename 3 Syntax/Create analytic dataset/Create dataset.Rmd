@@ -1,21 +1,9 @@
 ---
-title: "R Notebook"
-output: html_notebook
+author: Joel N. Fishbein, M.A.
+date: December 11, 2022
+
 ---
 
-# Information about this script
-
-**Purpose**: XX
-
-**Input**: XX
-
-**Summary of code**
-
-XX
-
-**Output**
-
-XX
 
 ```{r, include=FALSE}
 library(tidyverse)

@@ -1,6 +1,6 @@
 ---
-title: "Compute omega total reliability"
-output: html_notebook
+author: Joel N. Fishbein, M.A.
+date: December 11, 2022
 ---
 
 # Read in the data and libraries

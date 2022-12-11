@@ -1,6 +1,6 @@
 ---
-title: "Compute Predictability"
-output: html_notebook
+author: Joel N. Fishbein, M.A.
+date: December 11, 2022
 ---
 
 Brief description of this approach provided in: https://jonashaslbeck.com/Predictability-in-network-models/

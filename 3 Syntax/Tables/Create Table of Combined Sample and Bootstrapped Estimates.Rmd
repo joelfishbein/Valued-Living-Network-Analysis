@@ -1,7 +1,6 @@
 ---
-title: "Create Table of Combined Sample and Bootstrap Estimates"
-author: Joel N Fishbein
-output: html_notebook
+author: Joel N. Fishbein, M.A.
+date: December 11, 2022
 ---
 
 Generates Table 2 and Supplemental Table A1

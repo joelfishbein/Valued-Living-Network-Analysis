@@ -1,10 +1,6 @@
 ---
-title: "R Notebook"
-author: Joel Fishbein
-date: May 16 2022
-output:
-  html_document:
-  df_print: paged
+author: Joel N. Fishbein, M.A.
+date: December 11, 2022
 ---
   
 

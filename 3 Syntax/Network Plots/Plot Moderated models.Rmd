@@ -1,8 +1,6 @@
 ---
-title: "Visualize Moderated Models"
-output:
-  pdf_document: default
-  html_notebook: default
+author: Joel N. Fishbein, M.A.
+date: December 11, 2022
 ---
 
 # Read in libraries and data
