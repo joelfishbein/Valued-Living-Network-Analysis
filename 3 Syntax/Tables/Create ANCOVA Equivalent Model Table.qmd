@@ -15,11 +15,7 @@ library(tidyverse)
 library(here)
 library(kableExtra)
 
-
-#load(file = here('4 Generated Datasets', 'PrePost_mediation_models_difference_score_May30.RData'))
-#load(file = here('4 Generated Datasets', 'PrePost_mediation_models_residualized.RData'))
 load(file = here('4 Generated Datasets', 'PrePost_mediation_models_ANCOVA_equivalent.RData'))
-# drop the functions so that the mapping works
 
 ```
 
